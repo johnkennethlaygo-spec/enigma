@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enigma Solana Scanner</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <h1>Enigma</h1>
+        <p class="muted">Solana behavioral scanner</p>
+
+        <section class="panel">
+          <h2>1) Connect Wallet</h2>
+          <div id="auth-state" class="muted">Not connected</div>
+          <button id="connect-wallet">Connect Phantom</button>
+        </section>
+
+        <section class="panel">
+          <h2>2) Watchlist (max 5)</h2>
+          <label for="watchlist-input">Solana mint addresses (CSV)</label>
+          <textarea id="watchlist-input" rows="6" placeholder="So11111111111111111111111111111111111111112,..."></textarea>
+          <button id="save-watchlist">Save Watchlist</button>
+        </section>
+
+        <section class="panel">
+          <h2>3) Scan Controls</h2>
+          <label for="scan-seconds">Refresh interval (seconds)</label>
+          <input id="scan-seconds" type="number" min="10" max="3600" value="30" />
+          <label for="scan-hours">Run duration (hours, max 24)</label>
+          <input id="scan-hours" type="number" min="1" max="24" value="24" />
+          <button id="start-scan">Start Dynamic Scan</button>
+          <button id="stop-scan" class="secondary">Stop Scan</button>
+        </section>
+
+        <section class="panel">
+          <h2>4) Discovery Mode</h2>
+          <p class="muted">Find newly launched Solana tokens and add strong candidates into your watchlist.</p>
+          <button id="discover-tokens">Find New Token Suggestions</button>
+          <div id="discovery-list" class="discovery-list"></div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <section class="panel">
+          <div class="row between">
+            <h2>Performance</h2>
+            <span id="scan-status" class="badge">Stopped</span>
+          </div>
+          <div id="stats-grid" class="stats-grid">
+            <div class="stat"><span>Scans</span><strong>0</strong></div>
+            <div class="stat"><span>Wins</span><strong>0</strong></div>
+            <div class="stat"><span>Losses</span><strong>0</strong></div>
+            <div class="stat"><span>Win Rate</span><strong>0%</strong></div>
+            <div class="stat"><span>Avg PnL</span><strong>0%</strong></div>
+            <div class="stat"><span>Snipes</span><strong>0</strong></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Scanner Methodology</h2>
+          <p class="muted">
+            Enigma Scanner v1 scores behavior and risk, then maps to FAVORABLE/CAUTION/HIGH_RISK.
+          </p>
+          <ul class="method-list">
+            <li>45% Kill-Switch score (holder concentration + authority risk)</li>
+            <li>20% Liquidity score</li>
+            <li>15% Participation score (24h volume / liquidity)</li>
+            <li>20% Momentum score (24h price change)</li>
+            <li>Penalties for connected-holder clusters and new-wallet concentration</li>
+          </ul>
+          <p class="muted">
+            Mapping:
+            FAVORABLE if score >= 70 and kill-switch PASS, HIGH_RISK if score < 45 or kill-switch BLOCK.
+          </p>
+          <p class="muted">
+            This is a scanner, not a guaranteed signal predictor.
+          </p>
+        </section>
+
+        <section class="panel">
+          <div class="row between">
+            <h2>Live Scanner Results</h2>
+            <button id="scan-once" class="secondary">Scan Now</button>
+          </div>
+          <div id="signal-feed" class="signal-feed"></div>
+        </section>
+
+        <section class="panel">
+          <h2>System Messages</h2>
+          <div id="messages" class="messages"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

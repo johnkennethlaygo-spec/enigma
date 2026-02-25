@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+dist
+enigma_data.sqlite
+enigma_history.jsonl
+enigma_journal.log

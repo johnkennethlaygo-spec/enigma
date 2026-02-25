@@ -1,0 +1,19 @@
+{
+  "agent": {
+    "name": "Enigma",
+    "role": "Trader productivity & risk assistant",
+    "mode": "analysis"
+  },
+  "limits": {
+    "maxToolCalls": 12
+  },
+  "risk": {
+    "allowDangerousOps": false
+  },
+  "sources": {
+    "news": ["coindesk.com", "theblock.co", "decrypt.co"]
+  },
+  "onchain": {
+    "rpcUrl": "${SOLANA_RPC_URL}"
+  }
+}

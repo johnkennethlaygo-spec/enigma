@@ -1,0 +1,12 @@
+# Root project ignores
+node_modules/
+.env
+*.log
+
+# Enigma app build/runtime artifacts
+enigma/node_modules/
+enigma/dist/
+enigma/.env
+enigma/*.sqlite
+enigma/*.jsonl
+enigma/*.log
