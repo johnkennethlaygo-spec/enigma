@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: enigma-agent
+    runtime: docker
+    rootDir: enigma
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENIGMA_JWT_SECRET
+        generateValue: true
+      - key: HELIUS_API_KEY
+        sync: false
+      - key: SOLANA_RPC_FALLBACK_URLS
+        value: https://api.mainnet-beta.solana.com
+      - key: ENIGMA_RPC_RETRY_ATTEMPTS
+        value: "3"
+      - key: ENIGMA_RPC_TIMEOUT_MS
+        value: "12000"
+      - key: ENIGMA_ONCHAIN_CACHE_TTL_SEC
+        value: "60"
+      - key: ENIGMA_DB_PATH
+        value: /var/data/enigma_data.sqlite
+    disk:
+      name: enigma-data
+      mountPath: /var/data
+      sizeGB: 1
