@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULSEN Enigma Developer Docs</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>FULSEN Enigma Developer Docs</h1>
+      <p>Production integration guide for API, CLI, browser extension, and partner platforms</p>
+      <div class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/manual.html">Manual</a>
+        <a href="/presentation.html">Presentation</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/extension-preview.html">Extension Preview</a>
+        <a href="/api-docs.html">API Explorer</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin Premium</a>
+      </div>
+    </header>
+
+    <main class="doc">
+      <section class="doc-card">
+        <h2>1) Product + Integration Scope</h2>
+        <p><strong>FULSEN Enigma</strong> is a Solana risk-intelligence layer designed for traders and trading platforms.</p>
+        <ul>
+          <li>Pre-entry token behavior analysis (kill-switch, concentration, authorities, connected holders)</li>
+          <li>Live watchlist monitoring and status flips</li>
+          <li>Holder behavior table for deeper due diligence</li>
+          <li>Execution-ready architecture via external routers (for example Jupiter Ultra)</li>
+        </ul>
+        <p><strong>Boundary:</strong> Enigma defaults to non-execution mode. Auto execution is opt-in and should run only with dedicated risk-configured bot wallets.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>2) Production Prerequisites</h2>
+        <pre><code>NODE_ENV=production
+PORT=3000
+HOST=0.0.0.0
+ENIGMA_JWT_SECRET=&lt;strong-random-secret&gt;
+HELIUS_API_KEY=&lt;key&gt;
+# Optional alternative:
+# SOLANA_RPC_URL=&lt;https-rpc-endpoint&gt;</code></pre>
+        <ul>
+          <li><strong>Operator-only keys:</strong> all env keys on this page are for FULSEN backend operations.</li>
+          <li><strong>User-side:</strong> users only connect wallet and use app flows; they do not provide Helius/Jupiter/admin keys.</li>
+          <li>Set <code>ENIGMA_JWT_SECRET</code> to a long random value.</li>
+          <li>Configure either <code>HELIUS_API_KEY</code> or <code>SOLANA_RPC_URL</code>.</li>
+          <li>Use persistent storage for SQLite data in production.</li>
+          <li>Put the service behind TLS + reverse proxy (Nginx/Cloudflare/load balancer).</li>
+          <li>Set <code>ENIGMA_PREMIUM_TELEGRAM</code> and <code>ENIGMA_ADMIN_TOKEN</code> for premium onboarding.</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>3) Authentication Flow (Wallet + JWT)</h2>
+        <ol>
+          <li>Create nonce: <code>POST /api/auth/nonce</code></li>
+          <li>Wallet signs nonce message</li>
+          <li>Verify signature: <code>POST /api/auth/verify</code> and get JWT</li>
+          <li>Send JWT in <code>Authorization: Bearer &lt;token&gt;</code> to protected endpoints</li>
+        </ol>
+        <pre><code>curl -X POST https://your-domain.com/api/auth/nonce \
+  -H "content-type: application/json" \
+  -d '{"wallet":"&lt;WALLET_ADDRESS&gt;"}'</code></pre>
+        <pre><code>curl -X POST https://your-domain.com/api/auth/verify \
+  -H "content-type: application/json" \
+  -d '{"wallet":"&lt;WALLET_ADDRESS&gt;","nonce":"&lt;NONCE&gt;","signature":"&lt;BASE58_SIGNATURE&gt;"}'</code></pre>
+      </section>
+
+      <section class="doc-card">
+        <h2>4) API Surface (Current)</h2>
+        <p>Interactive explorer: <a href="/api-docs.html"><code>/api-docs.html</code></a></p>
+        <p>Machine schema: <a href="/api/openapi.json"><code>/api/openapi.json</code></a></p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Method</th>
+                <th>Auth</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>/api/health</code></td><td>GET</td><td>No</td><td>Service + RPC health</td></tr>
+              <tr><td><code>/api/auth/nonce</code></td><td>POST</td><td>No</td><td>Create wallet login nonce</td></tr>
+              <tr><td><code>/api/auth/verify</code></td><td>POST</td><td>No</td><td>Verify signature and issue JWT</td></tr>
+              <tr><td><code>/api/admin/users/plan</code></td><td>POST</td><td>Admin token</td><td>Upgrade user to premium (<code>pro</code>)</td></tr>
+              <tr><td><code>/api/admin/users/balance</code></td><td>POST</td><td>Admin token</td><td>Set user managed balance</td></tr>
+              <tr><td><code>/api/admin/withdrawals</code></td><td>GET</td><td>Admin token</td><td>List withdrawal requests</td></tr>
+              <tr><td><code>/api/admin/withdrawals/:id/approve</code></td><td>POST</td><td>Admin token</td><td>Approve request and send payout</td></tr>
+              <tr><td><code>/api/admin/withdrawals/:id/reject</code></td><td>POST</td><td>Admin token</td><td>Reject request and return user balance</td></tr>
+              <tr><td><code>/api/premium/info</code></td><td>GET</td><td>No</td><td>Premium payment address and tier amounts</td></tr>
+              <tr><td><code>/api/premium/verify-payment</code></td><td>POST</td><td>Yes</td><td>On-chain payment verification and auto-upgrade</td></tr>
+              <tr><td><code>/api/auth/me</code></td><td>GET</td><td>Yes</td><td>User profile + stats</td></tr>
+              <tr><td><code>/api/profile/overview</code></td><td>GET</td><td>Yes</td><td>User profile overview + managed balance</td></tr>
+              <tr><td><code>/api/profile/history</code></td><td>GET</td><td>Yes</td><td>Premium payments, bot positions, withdrawals</td></tr>
+              <tr><td><code>/api/withdrawals/me</code></td><td>GET</td><td>Yes</td><td>User withdrawal list + balance</td></tr>
+              <tr><td><code>/api/withdrawals/request</code></td><td>POST</td><td>Yes</td><td>Create withdrawal request</td></tr>
+              <tr><td><code>/api/watchlist</code></td><td>GET/PUT/POST</td><td>Yes</td><td>Read/update watchlist</td></tr>
+              <tr><td><code>/api/watchlist/add</code></td><td>POST</td><td>Yes</td><td>Append one mint</td></tr>
+              <tr><td><code>/api/signal</code></td><td>POST</td><td>Yes</td><td>Single-token scan</td></tr>
+              <tr><td><code>/api/watchlist/scan</code></td><td>POST</td><td>Yes</td><td>Scan saved watchlist</td></tr>
+              <tr><td><code>/api/signals/stream</code></td><td>POST</td><td>Yes</td><td>Scan passed mint list</td></tr>
+              <tr><td><code>/api/discovery/suggest</code></td><td>POST</td><td>Yes</td><td>New token candidate suggestions</td></tr>
+              <tr><td><code>/api/token/holders</code></td><td>GET</td><td>Yes</td><td>Holder profile table + behavior</td></tr>
+              <tr><td><code>/api/forecast/resolve</code></td><td>POST</td><td>Yes</td><td>Resolve trade outcome feedback</td></tr>
+              <tr><td><code>/api/dashboard/stats</code></td><td>GET</td><td>Yes</td><td>Usage and signal metrics</td></tr>
+              <tr><td><code>/api/autotrade/config</code></td><td>GET/PUT</td><td>Yes</td><td>Auto-trade policy config</td></tr>
+              <tr><td><code>/api/autotrade/run</code></td><td>POST</td><td>Yes</td><td>Policy run for buy-candidate decisions</td></tr>
+              <tr><td><code>/api/autotrade/performance</code></td><td>GET</td><td>Yes</td><td>Persistent paper/live run analytics</td></tr>
+              <tr><td><code>/api/autotrade/execution-config</code></td><td>GET/PUT</td><td>Yes</td><td>Execution engine rules (TP/SL/size/cooldown)</td></tr>
+              <tr><td><code>/api/autotrade/positions</code></td><td>GET</td><td>Yes</td><td>Open/closed position ledger</td></tr>
+              <tr><td><code>/api/autotrade/engine/tick</code></td><td>POST</td><td>Yes</td><td>One engine cycle: auto open/close actions</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-card">
+        <h2>5) Trader App Integration Pattern</h2>
+        <ol>
+          <li>User opens token page (Pump.fun or your own trading UI).</li>
+          <li>Client calls <code>/api/signal</code> before entry.</li>
+          <li>Policy engine decides: allow / caution / block.</li>
+          <li>If allowed, trader executes via exchange/router (Jupiter Ultra or other).</li>
+          <li>Post-entry, app loops <code>/api/watchlist/scan</code> for alerts and risk drift.</li>
+        </ol>
+        <p>This preserves control for the trader while enabling semi-automated risk handling.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>6) Jupiter Ultra Execution Bridge</h2>
+        <p>Recommended execution chain:</p>
+        <ol>
+          <li>Risk Gate: Enigma scan + policy decision</li>
+          <li>Quote/Order: Jupiter <code>/ultra/v1/order</code></li>
+          <li>Signing: user wallet signs base64 tx</li>
+          <li>Execute: Jupiter <code>/ultra/v1/execute</code></li>
+          <li>Monitor: Enigma live scan loop + alerts</li>
+        </ol>
+        <p>Best practice: never execute when Enigma verdict is <code>HIGH_RISK</code> unless trader explicitly overrides.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>7) Browser Extension Architecture (Manifest V3)</h2>
+        <ul>
+          <li>Content script reads token mint from Pump.fun route/DOM.</li>
+          <li>Background service worker authenticates with Enigma API.</li>
+          <li>Popup/side panel displays verdict, reasons, and risk trend.</li>
+          <li>Use extension notifications + sound on status flip and threshold breach.</li>
+        </ul>
+        <pre><code>{
+  "manifest_version": 3,
+  "name": "FULSEN Enigma Guard",
+  "permissions": ["storage", "notifications", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://pump.fun/*",
+    "https://your-enigma-domain.com/*"
+  ]
+}</code></pre>
+        <p>
+          Production-ready scaffold is included in repo:
+          <code>/extension</code> (load unpacked in Chrome). Investor prototype page:
+          <a href="/extension-preview.html"><code>/extension-preview.html</code></a>.
+        </p>
+        <ol>
+          <li>Open <code>chrome://extensions</code>, enable Developer Mode.</li>
+          <li>Load unpacked folder <code>enigma/extension</code>.</li>
+          <li>Set API base URL + JWT in popup.</li>
+          <li>Enable auto-scan and open side panel for live history.</li>
+          <li>Open Pump.fun token page; extension detects mint, scans, and can add it to watchlist in one click.</li>
+        </ol>
+      </section>
+
+      <section class="doc-card">
+        <h2>8) CLI Usage (Local and Ops)</h2>
+        <pre><code>git clone &lt;repo&gt;
+cd enigma/enigma
+npm install
+cp .env.example .env
+npm run build
+npm run enigma -- --help</code></pre>
+        <p>Typical commands:</p>
+        <pre><code>npm run enigma -- risk-check --mint &lt;TOKEN_MINT&gt;
+npm run enigma -- daily-brief --watchlist "SOL,BONK,WIF"
+npm run enigma -- journal --note "Entry cancelled due to kill-switch warning"</code></pre>
+      </section>
+
+      <section class="doc-card">
+        <h2>9) Selling the API to Other Companies</h2>
+        <p>Recommended commercial model for FULSEN:</p>
+        <ul>
+          <li>Issue customer API keys at gateway layer (mapped to tenant account).</li>
+          <li>Tier plans by request volume, watchlist size, and SLA priority.</li>
+          <li>Expose partner dashboard with usage, errors, and latency.</li>
+          <li>Offer webhook alerts and premium support tiers for trading desks.</li>
+        </ul>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Target User</th>
+                <th>Rate / Quota</th>
+                <th>Includes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Starter</td><td>Solo traders</td><td>Low</td><td>Signal scan + watchlist</td></tr>
+              <tr><td>Pro</td><td>Active trading teams</td><td>Medium</td><td>Priority queue + alerts + holders</td></tr>
+              <tr><td>Enterprise</td><td>Platforms / brokers</td><td>Custom</td><td>SLA, tenant isolation, dedicated support</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="doc-card">
+        <h2>10) Security + Compliance Controls</h2>
+        <ul>
+          <li>Rotate JWT secret and any upstream API credentials regularly.</li>
+          <li>Use WAF + per-tenant throttling to reduce abuse risk.</li>
+          <li>Log access events and execution decisions for audit trails.</li>
+          <li>Do not store plaintext private keys in app services.</li>
+          <li>Keep execution signing in user wallet or HSM/secure signer flow.</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>11) QA + Release Gate</h2>
+        <ol>
+          <li>Run <code>npm run build</code></li>
+          <li>Run <code>npm test</code></li>
+          <li>Run <code>npm run qa</code> and <code>npm run qa:extended</code></li>
+          <li>Validate <code>/api/health</code>, <code>/api/openapi.json</code>, and <code>/api-docs.html</code></li>
+          <li>Smoke test wallet auth and one live scan in staging before production deploy</li>
+        </ol>
+      </section>
+
+      <section class="doc-card">
+        <h2>12) Production Summary</h2>
+        <p>Enigma is now positioned as a trader safety + execution-intelligence layer:</p>
+        <ul>
+          <li>UI scanner for discretionary users</li>
+          <li>API platform for partner integrations</li>
+          <li>CLI for internal and automation workflows</li>
+          <li>Extension-ready architecture for Pump.fun and similar products</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>13) Auto-Trade Mode (Policy Controlled)</h2>
+        <p>Auto-trade is implemented as a policy engine with safe defaults.</p>
+        <ul>
+          <li>Default mode is <code>paper</code> and disabled</li>
+          <li>Only <code>FAVORABLE</code> signals that pass thresholds become buy candidates</li>
+          <li>Live mode can execute Jupiter swaps when execution env + signer are configured</li>
+        </ul>
+        <pre><code>curl -X PUT https://your-domain.com/api/autotrade/config \
+  -H "authorization: Bearer &lt;JWT&gt;" \
+  -H "content-type: application/json" \
+  -d '{
+    "enabled": true,
+    "mode": "paper",
+    "minPatternScore": 74,
+    "minConfidence": 0.78,
+    "maxConnectedHolderPct": 20,
+    "requireKillSwitchPass": true,
+    "maxPositionUsd": 75,
+    "scanIntervalSec": 30
+  }'</code></pre>
+        <pre><code>curl -X POST https://your-domain.com/api/autotrade/run \
+  -H "authorization: Bearer &lt;JWT&gt;" \
+  -H "content-type: application/json" \
+  -d '{"mints":"So11111111111111111111111111111111111111112"}'</code></pre>
+        <p>Execution engine endpoints:</p>
+        <pre><code>curl -X PUT https://your-domain.com/api/autotrade/execution-config \
+  -H "authorization: Bearer &lt;JWT&gt;" \
+  -H "content-type: application/json" \
+  -d '{
+    "enabled": true,
+    "mode": "paper",
+    "tradeAmountUsd": 25,
+    "maxOpenPositions": 3,
+    "tpPct": 8,
+    "slPct": 4,
+    "trailingStopPct": 3,
+    "maxHoldMinutes": 120,
+    "cooldownSec": 30,
+    "pollIntervalSec": 15
+  }'</code></pre>
+        <pre><code>curl -X POST https://your-domain.com/api/autotrade/engine/tick \
+  -H "authorization: Bearer &lt;JWT&gt;" \
+  -H "content-type: application/json" \
+  -d '{}'</code></pre>
+        <p><strong>Security policy:</strong> never paste private keys into browser UI or app server config. Use dedicated signer/HSM worker for production live execution.</p>
+        <p><strong>Premium policy:</strong> keep live mode as <code>pro</code> only. Users contact your Telegram, then you upgrade them using the admin endpoint.</p>
+        <p><strong>Optional auto-upgrade:</strong> users can pay on-chain and submit tx signature to <code>/api/premium/verify-payment</code> for automatic activation.</p>
+      </section>
+    </main>
+  </body>
+</html>

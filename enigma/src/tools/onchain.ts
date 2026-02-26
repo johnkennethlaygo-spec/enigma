@@ -25,6 +25,18 @@ const DEFAULT_RPC_ATTEMPTS = Math.max(1, Number(process.env.ENIGMA_RPC_RETRY_ATT
 const DEFAULT_CACHE_TTL_MS = Math.max(5_000, Number(process.env.ENIGMA_ONCHAIN_CACHE_TTL_SEC || 60) * 1000);
 const FAILURE_CACHE_TTL_MS = 10_000;
 
+function parseWalletLabels(): Record<string, string> {
+  const raw = String(process.env.ENIGMA_WALLET_LABELS || "").trim();
+  if (!raw) return {};
+  const map: Record<string, string> = {};
+  raw.split(",").forEach((item) => {
+    const [address, label] = item.split(":").map((value) => value.trim());
+    if (!address || !label) return;
+    map[address] = label;
+  });
+  return map;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -127,6 +139,33 @@ function createRpcCaller(primaryRpcUrl?: string): { call: RpcCaller; urls: strin
 function pct(part: number, total: number): number {
   if (!total) return 0;
   return (part / total) * 100;
+}
+
+function inferWalletSource(input: {
+  configuredLabel?: string;
+  owner: string;
+  tokenAccount: string;
+  isLpCandidate: boolean;
+  isNewWallet: boolean;
+  connectedGroupId: number;
+  recentTxCount: number;
+  buyTxCount: number;
+  sellTxCount: number;
+}): string {
+  if (input.isLpCandidate) return "liquidity-pool-candidate";
+
+  const configured = String(input.configuredLabel || "").trim();
+  if (configured) return configured;
+
+  if (input.owner === input.tokenAccount) return "token-account-owner";
+  if (input.connectedGroupId > 0 && input.isNewWallet) return "clustered-new-wallet";
+  if (input.connectedGroupId > 0) return "clustered-wallet";
+  if (input.isNewWallet) return "new-wallet";
+
+  const observedTrades = input.buyTxCount + input.sellTxCount;
+  if (observedTrades >= 4 || input.recentTxCount >= 10) return "active-trader-wallet";
+
+  return "unattributed-wallet";
 }
 
 function signaturesOverlap(a: string[], b: string[]): boolean {
@@ -233,13 +272,88 @@ async function tokenAccountRecentSignatures(
   }
 }
 
+function getAccountKeys(transaction: Record<string, unknown>): string[] {
+  const keys = (transaction?.message as Record<string, unknown> | undefined)
+    ?.accountKeys as Array<string | { pubkey?: string }> | undefined;
+  if (!Array.isArray(keys)) return [];
+  return keys.map((key) => (typeof key === "string" ? key : String(key.pubkey || ""))).filter(Boolean);
+}
+
+function parseTokenAmount(value: unknown): number {
+  const entry = (value as Record<string, unknown>) || {};
+  const ui = (entry.uiTokenAmount as Record<string, unknown> | undefined) || {};
+  const amount = Number(ui.uiAmountString || ui.uiAmount || 0);
+  if (Number.isFinite(amount)) return amount;
+  return Number(ui.amount || 0) || 0;
+}
+
+function tokenAccountDeltaFromTx(tx: Record<string, unknown>, tokenAccount: string): number {
+  const txBody = (tx.transaction as Record<string, unknown> | undefined) || {};
+  const meta = (tx.meta as Record<string, unknown> | undefined) || {};
+  const keys = getAccountKeys(txBody);
+  if (!keys.length) return 0;
+
+  const pre = (meta.preTokenBalances as Array<Record<string, unknown>> | undefined) || [];
+  const post = (meta.postTokenBalances as Array<Record<string, unknown>> | undefined) || [];
+  const idx = keys.findIndex((key) => key === tokenAccount);
+  if (idx < 0) return 0;
+
+  const preEntry = pre.find((entry) => Number(entry.accountIndex || -1) === idx);
+  const postEntry = post.find((entry) => Number(entry.accountIndex || -1) === idx);
+
+  return parseTokenAmount(postEntry) - parseTokenAmount(preEntry);
+}
+
+async function tokenAccountBuySellActivity(
+  callRpc: RpcCaller,
+  tokenAccount: string
+): Promise<{ buyTxCount: number; sellTxCount: number }> {
+  try {
+    const signatures = await callRpc<Array<{ signature: string }>>("getSignaturesForAddress", [
+      tokenAccount,
+      { limit: 8 }
+    ]);
+
+    let buyTxCount = 0;
+    let sellTxCount = 0;
+
+    for (const item of signatures) {
+      if (!item.signature) continue;
+      let tx: Record<string, unknown> | null = null;
+      try {
+        tx = await callRpc<Record<string, unknown> | null>("getTransaction", [
+          item.signature,
+          { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 }
+        ]);
+      } catch {
+        continue;
+      }
+      if (!tx) continue;
+
+      const delta = tokenAccountDeltaFromTx(tx, tokenAccount);
+      if (delta > 0) buyTxCount += 1;
+      else if (delta < 0) sellTxCount += 1;
+    }
+
+    return { buyTxCount, sellTxCount };
+  } catch {
+    return { buyTxCount: 0, sellTxCount: 0 };
+  }
+}
+
 export function createOnchainTool(rpcUrl?: string) {
   const rpc = createRpcCaller(rpcUrl);
   const primaryRpc = rpc.urls[0];
+  const knownWalletLabels = parseWalletLabels();
   const riskCache = new Map<string, { expiresAt: number; data: Record<string, unknown> }>();
 
   return {
-    async riskSignals(mint: string): Promise<Record<string, unknown>> {
+    async riskSignals(
+      mint: string,
+      options?: {
+        holderLimit?: number;
+      }
+    ): Promise<Record<string, unknown>> {
       if (!primaryRpc) {
         return {
           mint,
@@ -249,7 +363,8 @@ export function createOnchainTool(rpcUrl?: string) {
         };
       }
 
-      const cacheKey = mint.trim();
+      const holderLimit = Math.min(50, Math.max(8, Number(options?.holderLimit || 12)));
+      const cacheKey = `${mint.trim()}::${holderLimit}`;
       const now = Date.now();
       const cached = riskCache.get(cacheKey);
       if (cached && cached.expiresAt > now) {
@@ -298,7 +413,7 @@ export function createOnchainTool(rpcUrl?: string) {
         else if (top3Pct >= 25) concentrationRisk = "medium";
         if (top3Pct >= 50) riskFlags.push("Top-3 holder concentration is elevated");
 
-        const analyzed = largestAccounts.value.slice(0, 8);
+        const analyzed = largestAccounts.value.slice(0, holderLimit);
         const tokenAccounts = analyzed.map((holder) => holder.address);
         const ownersByTokenAccount = await loadOwners(rpc.call, tokenAccounts);
 
@@ -326,6 +441,10 @@ export function createOnchainTool(rpcUrl?: string) {
         const groups = connectedGroups(holderNodes).filter((group) => group.length >= 2);
         const connectedAccounts = groups.flat();
         const connectedRaw = connectedAccounts.reduce((sum, holder) => sum + holder.amountRaw, 0);
+        const groupByOwner = new Map<string, number>();
+        groups.forEach((group, idx) => {
+          group.forEach((holder) => groupByOwner.set(holder.owner, idx + 1));
+        });
 
         const holderBehavior = {
           analyzedTopAccounts: holderNodes.length,
@@ -343,9 +462,63 @@ export function createOnchainTool(rpcUrl?: string) {
                 totalSupply
               ).toFixed(2)
             ),
-            owners: group.map((holder) => holder.owner)
+            owners: group.map((holder) => holder.owner),
+            reason: "linked by shared recent token-account signatures"
           }))
         };
+
+        const activityByTokenAccount = await Promise.all(
+          holderNodes.slice(0, 5).map(async (holder) => {
+            const activity = await tokenAccountBuySellActivity(rpc.call, holder.tokenAccount);
+            return { tokenAccount: holder.tokenAccount, activity };
+          })
+        );
+        const activityMap = new Map(
+          activityByTokenAccount.map((entry) => [entry.tokenAccount, entry.activity])
+        );
+
+        const holderProfiles = holderNodes.map((holder, index) => {
+          const amountPct = Number(pct(holder.amountRaw, totalSupply).toFixed(2));
+          const isNewWallet = holder.walletAgeDays !== null && holder.walletAgeDays <= 14;
+          const connectedGroupId = groupByOwner.get(holder.owner) || 0;
+          const isLpCandidate = index === 0;
+          const activity = activityMap.get(holder.tokenAccount) || { buyTxCount: 0, sellTxCount: 0 };
+          const walletLabel = inferWalletSource({
+            configuredLabel: knownWalletLabels[holder.owner],
+            owner: holder.owner,
+            tokenAccount: holder.tokenAccount,
+            isLpCandidate,
+            isNewWallet,
+            connectedGroupId,
+            recentTxCount: holder.recentSignatures.length,
+            buyTxCount: activity.buyTxCount,
+            sellTxCount: activity.sellTxCount
+          });
+          const sourceTag = walletLabel.toLowerCase();
+          const tags: string[] = [];
+          if (isLpCandidate) tags.push("lp-vault-candidate");
+          if (amountPct >= 2) tags.push("whale");
+          if (isNewWallet) tags.push("new-wallet");
+          if (connectedGroupId > 0) tags.push(`cluster-${connectedGroupId}`);
+          if (holder.recentSignatures.length >= 8) tags.push("high-activity");
+          if (sourceTag.includes("okx")) tags.push("okx-labeled");
+          if (sourceTag.includes("binance")) tags.push("binance-labeled");
+          if (sourceTag.includes("phantom")) tags.push("phantom-labeled");
+
+          return {
+            owner: holder.owner,
+            tokenAccount: holder.tokenAccount,
+            amountUi: holder.amountUi,
+            amountPct,
+            walletAgeDays: holder.walletAgeDays,
+            connectedGroupId,
+            recentTxCount: holder.recentSignatures.length,
+            walletSource: walletLabel,
+            buyTxCount: activity.buyTxCount,
+            sellTxCount: activity.sellTxCount,
+            tags
+          };
+        });
 
         if (holderBehavior.newWalletHolderPct >= 20) {
           riskFlags.push("High share held by recently observed wallets");
@@ -365,6 +538,7 @@ export function createOnchainTool(rpcUrl?: string) {
           mintAuthority,
           freezeAuthority,
           holderBehavior,
+          holderProfiles,
           sampleTopHolders: largestAccounts.value.slice(0, 8)
         };
 

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULSEN Enigma Premium Checkout</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>FULSEN Premium Checkout</h1>
+      <p>Pay on-chain, submit transaction signature, and auto-activate your premium access</p>
+      <div class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/manual.html">Manual</a>
+        <a href="/presentation.html">Presentation</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/api-docs.html">API Explorer</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin Premium</a>
+      </div>
+    </header>
+
+    <main class="doc">
+      <section class="doc-card">
+        <h2>How It Works</h2>
+        <ol>
+          <li>Connect your Phantom wallet on the dashboard first (creates login token).</li>
+          <li>Send required SOL amount to the premium payment address below.</li>
+          <li>Paste transaction signature and submit verification.</li>
+          <li>Your wallet plan upgrades to <code>pro</code> automatically if valid.</li>
+        </ol>
+        <p><strong>User reminder:</strong> you only need Phantom + transaction signature. Backend API keys are managed internally by FULSEN.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>Payment Details</h2>
+        <p><strong>Telegram Support:</strong> <span id="premium-telegram">@FULSEN_SUPPORT</span></p>
+        <label for="premium-address">Payment Address</label>
+        <div class="mint-row">
+          <code id="premium-address">Loading...</code>
+          <button id="copy-address" class="tiny-btn">Copy</button>
+        </div>
+        <div id="premium-tiers" class="table-scroll"></div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Verify Transaction</h2>
+        <label for="premium-tier">Tier</label>
+        <select id="premium-tier">
+          <option value="pro1">Pro I</option>
+          <option value="pro2">Pro II</option>
+          <option value="pro3">Pro III</option>
+          <option value="pro4">Pro IV</option>
+        </select>
+
+        <label for="tx-signature">Transaction Signature</label>
+        <input id="tx-signature" type="text" placeholder="Paste Solana transaction signature" />
+        <button id="verify-payment">Verify and Activate Premium</button>
+        <div id="premium-result" class="msg">Ready.</div>
+      </section>
+    </main>
+
+    <script>
+      const premiumAddress = document.querySelector("#premium-address");
+      const premiumTelegram = document.querySelector("#premium-telegram");
+      const premiumTiers = document.querySelector("#premium-tiers");
+      const copyAddress = document.querySelector("#copy-address");
+      const premiumTier = document.querySelector("#premium-tier");
+      const txSignature = document.querySelector("#tx-signature");
+      const verifyButton = document.querySelector("#verify-payment");
+      const resultBox = document.querySelector("#premium-result");
+      const authToken = localStorage.getItem("enigma_token") || "";
+
+      function formatSol(lamports) {
+        const n = Number(lamports || 0);
+        return (n / 1_000_000_000).toLocaleString(undefined, { maximumFractionDigits: 6 });
+      }
+
+      function setResult(text, tone) {
+        resultBox.className = `msg ${tone || ""}`.trim();
+        resultBox.textContent = text;
+      }
+
+      async function loadPremiumInfo() {
+        const response = await fetch("/api/premium/info");
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || "Failed to load premium info");
+        }
+
+        premiumAddress.textContent = payload.paymentAddress || "N/A";
+        premiumTelegram.textContent = payload.telegram || "@FULSEN_SUPPORT";
+        const tiers = payload.tiers || {};
+        premiumTiers.innerHTML = `
+          <table class="paper-results-table">
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Lamports</th>
+                <th>SOL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(tiers)
+                .map(
+                  ([name, detail]) => `
+                <tr>
+                  <td>${name}</td>
+                  <td>${Number(detail.lamports || 0).toLocaleString()}</td>
+                  <td>${formatSol(detail.lamports)} SOL</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      copyAddress?.addEventListener("click", async () => {
+        const value = String(premiumAddress.textContent || "").trim();
+        if (!value || value === "Loading...") return;
+        await navigator.clipboard.writeText(value);
+        setResult("Payment address copied.", "ok");
+      });
+
+      verifyButton?.addEventListener("click", async () => {
+        if (!authToken) {
+          setResult("Connect wallet on dashboard first so your login token is available.", "error");
+          return;
+        }
+
+        const tier = String(premiumTier.value || "").trim();
+        const signature = String(txSignature.value || "").trim();
+        if (!tier || !signature) {
+          setResult("Tier and transaction signature are required.", "error");
+          return;
+        }
+
+        verifyButton.disabled = true;
+        const prev = verifyButton.textContent;
+        verifyButton.textContent = "Verifying...";
+        try {
+          const response = await fetch("/api/premium/verify-payment", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ tier, txSignature: signature })
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || "Verification failed");
+          }
+
+          setResult(
+            `Verified. Wallet upgraded to ${payload.user?.plan || "pro"}. Reconnect wallet to refresh session.`,
+            "ok"
+          );
+        } catch (error) {
+          setResult(String(error.message || error), "error");
+        } finally {
+          verifyButton.disabled = false;
+          verifyButton.textContent = prev;
+        }
+      });
+
+      loadPremiumInfo().catch((error) => {
+        setResult(`Failed to load premium info: ${error.message}`, "error");
+      });
+    </script>
+  </body>
+</html>

@@ -3,40 +3,101 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enigma Manual</title>
+    <title>FULSEN Enigma Manual</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="hero">
-      <h1>Enigma Manual</h1>
-      <p>How to use the workflows safely and consistently</p>
+      <h1>FULSEN Enigma User Manual</h1>
+      <p>Clear operating guide for traders, teams, and client onboarding</p>
       <div class="nav">
         <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
         <a href="/manual.html">Manual</a>
         <a href="/presentation.html">Presentation</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/api-docs.html">API Explorer</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin Premium</a>
       </div>
     </header>
 
     <main class="doc">
-      <h2>Role</h2>
-      <p>Enigma is a trader productivity and risk assistant.</p>
+      <section class="doc-card">
+        <h2>1) What Enigma Does</h2>
+        <p>Enigma is a Solana behavioral risk scanner for trader decision support.</p>
+        <ul>
+          <li>Analyzes kill-switch risk and holder concentration before entry</li>
+          <li>Tracks behavior changes during live monitoring</li>
+          <li>Provides structured decision context: favorable, caution, high risk</li>
+        </ul>
+      </section>
 
-      <h2>Boundaries</h2>
-      <ul>
-        <li>No trade execution</li>
-        <li>No manipulation</li>
-        <li>No rule evasion</li>
-      </ul>
+      <section class="doc-card">
+        <h2>2) What Enigma Does Not Do</h2>
+        <ul>
+          <li>Does not guarantee profits</li>
+          <li>Does not replace your execution discipline and stop rules</li>
+          <li>Does not remove the need to validate data on external market tools</li>
+        </ul>
+      </section>
 
-      <h2>Workflows</h2>
-      <ol>
-        <li><strong>Daily Brief:</strong> watchlist context and catalysts.</li>
-        <li><strong>Risk Check:</strong> concentration and suspicious signal review.</li>
-        <li><strong>Journal:</strong> store post-trade notes for discipline.</li>
-      </ol>
+      <section class="doc-card">
+        <h2>3) Daily Workflow</h2>
+        <ol>
+          <li>Connect wallet</li>
+          <li>Build watchlist (up to 5 mints)</li>
+          <li>Run dynamic scan with interval and duration</li>
+          <li>Review verdict and risk details before considering entry</li>
+          <li>Enable alerts to detect status flips while in position</li>
+        </ol>
+      </section>
 
-      <h2>Viewer Mode</h2>
-      <p>Use the Presentation page for clean summaries in meetings, streams, or team updates.</p>
+      <section class="doc-card">
+        <h2>4) Verdict Interpretation</h2>
+        <ul>
+          <li><strong>FAVORABLE</strong>: cleaner profile, still verify externally</li>
+          <li><strong>CAUTION</strong>: mixed signals, reduce size or skip until clearer</li>
+          <li><strong>HIGH_RISK</strong>: block by default unless strict override policy exists</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>5) Pro Mode and Alerting</h2>
+        <p>Use risk presets and thresholds to match your strategy profile.</p>
+        <ul>
+          <li>Conservative: tighter kill-switch and connected-wallet limits</li>
+          <li>Balanced: default profile for most users</li>
+          <li>Aggressive: allows higher variance but increases risk exposure</li>
+        </ul>
+        <p>Enable browser notifications and sound buzz for fast reaction.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>6) Discovery Mode</h2>
+        <p>Discovery surfaces new candidates, but they are probabilistic and can include high-risk tokens.</p>
+        <ul>
+          <li>Always run manual due diligence on every discovered token</li>
+          <li>Do not auto-buy from discovery without strict policy checks</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>7) Team Operating Policy (Recommended)</h2>
+        <ul>
+          <li>No entry when verdict is HIGH_RISK</li>
+          <li>Require dual confirmation for CAUTION entries</li>
+          <li>Record post-trade outcomes for process improvement</li>
+          <li>Review missed alerts and false positives weekly</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>8) Advanced Usage</h2>
+        <p>If your organization needs automation, use the API and CLI guides in the developer page.</p>
+        <p>For trading platform integrations (including Pump.fun workflows), follow <a href="/developers.html">Developer Docs</a>.</p>
+      </section>
     </main>
   </body>
 </html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULSEN Enigma Profile</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>User Profile</h1>
+      <p>Your plan, managed balance, payment history, bot history, and withdrawals</p>
+      <div class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin Premium</a>
+      </div>
+    </header>
+
+    <main class="doc">
+      <section class="doc-card">
+        <h2>Profile Overview</h2>
+        <div id="profile-overview" class="paper-performance-grid"></div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Withdraw Funds</h2>
+        <label for="withdraw-wallet">Destination Wallet</label>
+        <input id="withdraw-wallet" type="text" placeholder="Default is your connected wallet" />
+        <label for="withdraw-lamports">Amount (lamports)</label>
+        <input id="withdraw-lamports" type="number" min="1" placeholder="e.g. 10000000" />
+        <button id="withdraw-submit">Submit Withdrawal Request</button>
+        <div id="withdraw-result" class="msg">Ready.</div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Payment History</h2>
+        <div id="payment-history" class="table-wrap"></div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Bot Position History</h2>
+        <div id="position-history" class="table-wrap"></div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Withdrawal Requests</h2>
+        <div id="withdraw-history" class="table-wrap"></div>
+      </section>
+    </main>
+
+    <script>
+      const token = localStorage.getItem("enigma_token") || "";
+      const overview = document.querySelector("#profile-overview");
+      const paymentHistory = document.querySelector("#payment-history");
+      const positionHistory = document.querySelector("#position-history");
+      const withdrawHistory = document.querySelector("#withdraw-history");
+      const withdrawWallet = document.querySelector("#withdraw-wallet");
+      const withdrawLamports = document.querySelector("#withdraw-lamports");
+      const withdrawSubmit = document.querySelector("#withdraw-submit");
+      const withdrawResult = document.querySelector("#withdraw-result");
+
+      function toSol(lamports) {
+        return (Number(lamports || 0) / 1_000_000_000).toLocaleString(undefined, {
+          maximumFractionDigits: 6
+        });
+      }
+
+      function setResult(text, tone = "") {
+        withdrawResult.className = `msg ${tone}`.trim();
+        withdrawResult.textContent = text;
+      }
+
+      async function api(path, init = {}) {
+        if (!token) throw new Error("Connect wallet first from dashboard.");
+        const response = await fetch(path, {
+          ...init,
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${token}`,
+            ...(init.headers || {})
+          }
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "request failed");
+        return payload;
+      }
+
+      function renderOverview(data) {
+        const user = data.user || {};
+        const balance = data.balance || {};
+        const stats = data.stats || {};
+        const totals = stats.totals || {};
+        overview.innerHTML = `
+          <div class="paper-kpi"><span>Wallet</span><strong>${user.wallet || "N/A"}</strong></div>
+          <div class="paper-kpi"><span>Plan</span><strong>${String(user.plan || "free").toUpperCase()}</strong></div>
+          <div class="paper-kpi"><span>Managed Balance</span><strong>${toSol(balance.lamports)} SOL</strong></div>
+          <div class="paper-kpi"><span>Open Positions</span><strong>${data.openPositionsCount || 0}</strong></div>
+          <div class="paper-kpi"><span>Total Signals</span><strong>${totals.signals || 0}</strong></div>
+          <div class="paper-kpi"><span>Win Rate</span><strong>${totals.winRatePct || 0}%</strong></div>
+        `;
+      }
+
+      function renderPayments(payments) {
+        if (!payments?.length) {
+          paymentHistory.innerHTML = `<div class="msg">No premium payments yet.</div>`;
+          return;
+        }
+        paymentHistory.innerHTML = `
+          <table class="paper-results-table">
+            <thead><tr><th>Time</th><th>Tier</th><th>Amount</th><th>Status</th><th>Tx</th></tr></thead>
+            <tbody>
+              ${payments
+                .map(
+                  (p) => `
+                <tr>
+                  <td>${new Date(p.created_at).toLocaleString()}</td>
+                  <td>${p.tier}</td>
+                  <td>${toSol(p.lamports)} SOL</td>
+                  <td>${p.status}</td>
+                  <td><code>${String(p.txSignature || "").slice(0, 12)}...</code></td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>`;
+      }
+
+      function renderPositions(positions) {
+        if (!positions?.length) {
+          positionHistory.innerHTML = `<div class="msg">No bot positions yet.</div>`;
+          return;
+        }
+        positionHistory.innerHTML = `
+          <table class="paper-results-table">
+            <thead><tr><th>ID</th><th>Mint</th><th>Status</th><th>Mode</th><th>Size</th><th>PnL%</th><th>Opened</th><th>Closed</th></tr></thead>
+            <tbody>
+              ${positions
+                .map(
+                  (p) => `
+                <tr>
+                  <td>${p.id}</td>
+                  <td><code>${String(p.mint).slice(0, 6)}...${String(p.mint).slice(-6)}</code></td>
+                  <td>${p.status}</td>
+                  <td>${p.mode}</td>
+                  <td>$${Number(p.sizeUsd || 0).toFixed(2)}</td>
+                  <td>${p.pnlPct === null ? "-" : Number(p.pnlPct).toFixed(2)}%</td>
+                  <td>${new Date(p.opened_at).toLocaleString()}</td>
+                  <td>${p.closed_at ? new Date(p.closed_at).toLocaleString() : "-"}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>`;
+      }
+
+      function renderWithdrawals(requests) {
+        if (!requests?.length) {
+          withdrawHistory.innerHTML = `<div class="msg">No withdrawal requests yet.</div>`;
+          return;
+        }
+        withdrawHistory.innerHTML = `
+          <table class="paper-results-table">
+            <thead><tr><th>ID</th><th>Amount</th><th>Destination</th><th>Status</th><th>Payout Tx</th><th>Time</th></tr></thead>
+            <tbody>
+              ${requests
+                .map(
+                  (r) => `
+                <tr>
+                  <td>${r.id}</td>
+                  <td>${toSol(r.lamports)} SOL</td>
+                  <td><code>${String(r.destinationWallet).slice(0, 6)}...${String(r.destinationWallet).slice(-6)}</code></td>
+                  <td>${r.status}</td>
+                  <td>${r.payoutSignature ? `<code>${String(r.payoutSignature).slice(0, 12)}...</code>` : "-"}</td>
+                  <td>${new Date(r.created_at).toLocaleString()}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>`;
+      }
+
+      async function refreshAll() {
+        const [overviewData, historyData] = await Promise.all([
+          api("/api/profile/overview"),
+          api("/api/profile/history")
+        ]);
+        renderOverview(overviewData);
+        renderPayments(historyData.payments || []);
+        renderPositions(historyData.positions || []);
+        renderWithdrawals(historyData.withdrawals || []);
+      }
+
+      withdrawSubmit?.addEventListener("click", async () => {
+        try {
+          const destinationWallet = String(withdrawWallet.value || "").trim();
+          const lamports = Number(withdrawLamports.value || 0);
+          if (!lamports || lamports <= 0) {
+            setResult("Enter a valid lamports amount.", "error");
+            return;
+          }
+
+          await api("/api/withdrawals/request", {
+            method: "POST",
+            body: JSON.stringify({ destinationWallet, lamports })
+          });
+          setResult("Withdrawal request submitted for admin approval.", "ok");
+          await refreshAll();
+        } catch (error) {
+          setResult(String(error.message || error), "error");
+        }
+      });
+
+      refreshAll().catch((error) => {
+        setResult(String(error.message || error), "error");
+      });
+    </script>
+  </body>
+</html>

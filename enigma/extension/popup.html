@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enigma Guard</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <h1>FULSEN Enigma Guard</h1>
+
+      <label for="api-base">API Base URL</label>
+      <input id="api-base" type="text" placeholder="http://localhost:3000" />
+
+      <label for="auth-token">JWT Token</label>
+      <input id="auth-token" type="password" placeholder="Paste bearer JWT" />
+
+      <label for="mint">Mint</label>
+      <input id="mint" type="text" placeholder="Auto-detected on Pump.fun" />
+
+      <div class="row">
+        <button id="detect">Detect Mint</button>
+        <button id="scan">Scan</button>
+      </div>
+
+      <div class="row">
+        <button id="add-watchlist">Add to Watchlist</button>
+        <button id="open-sidepanel">Open Side Panel</button>
+      </div>
+
+      <div class="row toggles">
+        <label><input id="alert-high" type="checkbox" checked /> Alert HIGH_RISK</label>
+        <label><input id="alert-caution" type="checkbox" /> Alert CAUTION</label>
+        <label><input id="auto-scan" type="checkbox" checked /> Auto-scan on navigation</label>
+      </div>
+
+      <button id="save">Save Settings</button>
+      <a id="investor-preview" href="http://localhost:3000/extension-preview.html" target="_blank" rel="noreferrer">Open investor prototype preview</a>
+      <div id="status" class="status">Ready.</div>
+      <pre id="result" class="result"></pre>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

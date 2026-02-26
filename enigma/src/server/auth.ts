@@ -4,9 +4,12 @@ import bs58 from "bs58";
 import jwt from "jsonwebtoken";
 import nacl from "tweetnacl";
 import type { Request, Response, NextFunction } from "express";
-import { createOrTouchUser, getUsage } from "./db.js";
+import { createOrTouchUser, getUsage, getUserById } from "./db.js";
 
 const JWT_SECRET = process.env.ENIGMA_JWT_SECRET || "dev-secret-change-in-production";
+if (process.env.NODE_ENV === "production" && JWT_SECRET === "dev-secret-change-in-production") {
+  throw new Error("ENIGMA_JWT_SECRET must be set in production.");
+}
 
 export interface AuthUser {
   id: number;
@@ -68,6 +71,12 @@ export function authRequired(req: AuthedRequest, res: Response, next: NextFuncti
       wallet: payload.wallet,
       plan: payload.plan
     };
+
+    const current = getUserById(req.user.id);
+    if (current) {
+      req.user.plan = current.plan;
+      req.user.wallet = current.wallet;
+    }
 
     next();
   } catch {

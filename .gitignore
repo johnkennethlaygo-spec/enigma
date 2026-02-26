@@ -10,3 +10,5 @@ enigma/.env
 enigma/*.sqlite
 enigma/*.jsonl
 enigma/*.log
+enigma/.bot_wallet_info
+enigma/extension/icons/

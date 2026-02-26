@@ -33,7 +33,12 @@ export interface AgentTools {
     summarize(query: string): Promise<string>;
   };
   onchain: {
-    riskSignals(mint: string): Promise<Record<string, unknown>>;
+    riskSignals(
+      mint: string,
+      options?: {
+        holderLimit?: number;
+      }
+    ): Promise<Record<string, unknown>>;
     killSwitchScore(mint: string): Promise<Record<string, unknown>>;
     rpcHealth(): Promise<Record<string, unknown>>;
   };

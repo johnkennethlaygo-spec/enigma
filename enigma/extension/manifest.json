@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "FULSEN Enigma Guard",
+  "version": "1.1.0",
+  "description": "Pump.fun token risk scanner using FULSEN Enigma API",
+  "action": {
+    "default_title": "Enigma Guard",
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs",
+    "notifications",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://pump.fun/*",
+    "http://localhost:3000/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://pump.fun/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

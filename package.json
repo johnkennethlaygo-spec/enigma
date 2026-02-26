@@ -1,0 +1,10 @@
+{
+  "name": "enigma-workspace",
+  "private": true,
+  "scripts": {
+    "web": "npm --prefix enigma run web",
+    "dev": "npm --prefix enigma run dev",
+    "build": "npm --prefix enigma run build",
+    "enigma": "npm --prefix enigma run enigma"
+  }
+}

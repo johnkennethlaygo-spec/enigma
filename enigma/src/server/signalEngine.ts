@@ -9,8 +9,9 @@ interface DexScreenerTokenResponse {
     priceUsd?: string;
     liquidity?: { usd?: number };
     volume?: { h24?: number };
-    priceChange?: { h24?: number };
+    priceChange?: { m5?: number; h1?: number; h6?: number; h24?: number };
     fdv?: number;
+    txns?: { h24?: { buys?: number; sells?: number } };
     chainId?: string;
     pairCreatedAt?: number;
     baseToken?: { address?: string; name?: string; symbol?: string };
@@ -72,6 +73,11 @@ async function fetchMarketSnapshot(mint: string): Promise<Record<string, unknown
     priceUsd: Number(best.priceUsd || 0),
     liquidityUsd: Number(best.liquidity?.usd || 0),
     volume24hUsd: Number(best.volume?.h24 || 0),
+    buys24h: Number(best.txns?.h24?.buys || 0),
+    sells24h: Number(best.txns?.h24?.sells || 0),
+    priceChange5mPct: Number(best.priceChange?.m5 || 0),
+    priceChange1hPct: Number(best.priceChange?.h1 || 0),
+    priceChange6hPct: Number(best.priceChange?.h6 || 0),
     priceChange24hPct: Number(best.priceChange?.h24 || 0),
     fdvUsd: Number(best.fdv || 0)
   };
@@ -79,6 +85,24 @@ async function fetchMarketSnapshot(mint: string): Promise<Record<string, unknown
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function toPrice(value: number): number {
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return Number(value.toPrecision(8));
+}
+
+function buildMiniChart(price: number, changes: { m5: number; h1: number; h6: number; h24: number }) {
+  if (!price || price <= 0) return { points: [], labels: ["24h", "6h", "1h", "5m", "now"] };
+
+  const p24 = price / (1 + changes.h24 / 100 || 1);
+  const p6 = price / (1 + changes.h6 / 100 || 1);
+  const p1 = price / (1 + changes.h1 / 100 || 1);
+  const p5 = price / (1 + changes.m5 / 100 || 1);
+  return {
+    points: [p24, p6, p1, p5, price].map((p) => Number(p.toPrecision(8))),
+    labels: ["24h", "6h", "1h", "5m", "now"]
+  };
 }
 
 export async function generateSignal(context: AgentContext, mint: string): Promise<Record<string, unknown>> {
@@ -98,6 +122,9 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
   const momentumScore = clamp(50 + change24h, 0, 100);
   const connectedPenalty = clamp(Number(holderBehavior.connectedHolderPct || 0) * 0.45, 0, 45);
   const newWalletPenalty = clamp(Number(holderBehavior.newWalletHolderPct || 0) * 0.3, 0, 30);
+  const buys24h = Number(snapshot.buys24h || 0);
+  const sells24h = Number(snapshot.sells24h || 0);
+  const orderFlow = buys24h + sells24h > 0 ? buys24h / (buys24h + sells24h) : 0.5;
 
   let patternScore =
     killScore * 0.45 + liquidityScore * 0.2 + participationScore * 0.15 + momentumScore * 0.2;
@@ -111,6 +138,32 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
     status = "FAVORABLE";
   }
 
+  const price = Number(snapshot.priceUsd || 0);
+  const volShock = clamp(Math.abs(change24h) / 100, 0.03, 0.28);
+  const support1 = toPrice(price * (1 - volShock * 0.75));
+  const support2 = toPrice(price * (1 - volShock * 1.2));
+  const resistance1 = toPrice(price * (1 + volShock * 0.9));
+  const resistance2 = toPrice(price * (1 + volShock * 1.5));
+  const entryLow = toPrice(price * (1 - volShock * 0.55));
+  const entryHigh = toPrice(price * (1 - volShock * 0.2));
+  const stopLoss = toPrice(support2 * 0.98);
+
+  let sentimentLabel: "Bullish" | "Neutral" | "Bearish" = "Neutral";
+  let sentimentScore = 50;
+  sentimentScore += (orderFlow - 0.5) * 50;
+  sentimentScore += change24h * 0.4;
+  sentimentScore += (status === "FAVORABLE" ? 10 : status === "HIGH_RISK" ? -12 : 0);
+  sentimentScore -= connectedPenalty * 0.35 + newWalletPenalty * 0.2;
+  sentimentScore = clamp(sentimentScore, 0, 100);
+  if (sentimentScore >= 62) sentimentLabel = "Bullish";
+  else if (sentimentScore <= 38) sentimentLabel = "Bearish";
+  const miniChart = buildMiniChart(price, {
+    m5: Number(snapshot.priceChange5mPct || 0),
+    h1: Number(snapshot.priceChange1hPct || 0),
+    h6: Number(snapshot.priceChange6hPct || 0),
+    h24: change24h
+  });
+
   const reasons = [
     `Kill-switch: ${killVerdict} (${killScore}/100)`,
     `Pattern score: ${patternScore.toFixed(2)}/100`,
@@ -118,7 +171,8 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
     `Participation (vol/liquidity): ${(volume / Math.max(liquidity, 1)).toFixed(2)}`,
     `24h price change: ${change24h.toFixed(2)}%`,
     `Connected holders: ${Number(holderBehavior.connectedHolderPct || 0).toFixed(2)}%`,
-    `New-wallet holders: ${Number(holderBehavior.newWalletHolderPct || 0).toFixed(2)}%`
+    `New-wallet holders: ${Number(holderBehavior.newWalletHolderPct || 0).toFixed(2)}%`,
+    `Order flow (24h): buys ${buys24h}, sells ${sells24h}`
   ];
 
   return {
@@ -136,6 +190,35 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
     killSwitch: kill.data,
     holderBehavior,
     market: snapshot,
+    tradePlan: {
+      recommendation:
+        status === "FAVORABLE"
+          ? "Potential entry candidate if price respects support and risk is controlled"
+          : status === "CAUTION"
+            ? "Watchlist candidate; wait for confirmation near support"
+            : "Avoid entry until risk profile improves",
+      buyZone: { low: entryLow, high: entryHigh },
+      support: [support1, support2],
+      resistance: [resistance1, resistance2],
+      stopLoss,
+      invalidation: `Breakdown below ${stopLoss || "N/A"} with weak order flow`
+    },
+    sentiment: {
+      label: sentimentLabel,
+      score: Number(sentimentScore.toFixed(2)),
+      orderFlow: {
+        buys24h,
+        sells24h,
+        buyRatio: Number(orderFlow.toFixed(3))
+      },
+      summary:
+        sentimentLabel === "Bullish"
+          ? "Buy pressure and momentum currently favor upside continuation."
+          : sentimentLabel === "Bearish"
+            ? "Sell pressure and risk behavior currently dominate."
+            : "Mixed flow; wait for cleaner confirmation."
+    },
+    miniChart,
     links: {
       dexscreener: `https://dexscreener.com/solana/${String(snapshot.pairAddress || "")}`,
       birdeye: `https://birdeye.so/token/${mint}?chain=solana`,

@@ -1,0 +1,79 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #0b1830;
+  color: #e8f2ff;
+  min-width: 380px;
+}
+
+main {
+  padding: 12px;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  margin: 8px 0 4px;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #355d92;
+  background: #102241;
+  color: #e8f2ff;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.row.toggles {
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+button {
+  border: 1px solid #3568a8;
+  background: #1f3f6d;
+  color: #e8f2ff;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  flex: 1;
+}
+
+#investor-preview {
+  display: block;
+  margin-top: 10px;
+  color: #b4d7ff;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.result {
+  margin-top: 10px;
+  max-height: 240px;
+  overflow: auto;
+  background: #0f203d;
+  border: 1px solid #2e5586;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 11px;
+  white-space: pre-wrap;
+}

@@ -10,18 +10,38 @@
     <div class="app">
       <aside class="sidebar">
         <h1>Enigma</h1>
-        <p class="muted">Solana behavioral scanner</p>
+        <p class="muted">FULSEN | Solana behavioral scanner</p>
+
+        <section class="panel">
+          <h2>Developer Docs</h2>
+          <p class="muted">API, CLI, browser extension, and Pump.fun integration instructions.</p>
+          <a class="doc-link-btn" href="/start.html">Open Start Here</a>
+          <a class="doc-link-btn" href="/profile.html">Open Profile</a>
+          <a class="doc-link-btn" href="/developers.html">Open Developer Docs</a>
+          <a class="doc-link-btn" href="/extension-preview.html">Open Extension Prototype</a>
+          <a class="doc-link-btn" href="/api-docs.html">Open API Explorer</a>
+          <a class="doc-link-btn" href="/premium.html">Open Premium Checkout</a>
+          <a class="doc-link-btn" href="/admin.html">Open Admin Premium</a>
+        </section>
 
         <section class="panel">
           <h2>1) Connect Wallet</h2>
-          <div id="auth-state" class="muted">Not connected</div>
+          <div class="row between">
+            <div id="auth-state" class="muted">Not connected</div>
+            <span id="plan-status" class="badge">FREE</span>
+          </div>
           <button id="connect-wallet">Connect Phantom</button>
         </section>
 
         <section class="panel">
           <h2>2) Watchlist (max 5)</h2>
-          <label for="watchlist-input">Solana mint addresses (CSV)</label>
-          <textarea id="watchlist-input" rows="6" placeholder="So11111111111111111111111111111111111111112,..."></textarea>
+          <label for="watchlist-token-input">Add Solana mint addresses one-by-one</label>
+          <div class="watchlist-entry">
+            <input id="watchlist-token-input" type="text" placeholder="Paste one Solana mint address" />
+            <button id="add-watchlist-token" class="secondary">Add</button>
+          </div>
+          <div id="watchlist-chips" class="watchlist-chips"></div>
+          <p id="watchlist-hint" class="muted small">0/5 selected</p>
           <button id="save-watchlist">Save Watchlist</button>
         </section>
 
@@ -36,27 +56,90 @@
         </section>
 
         <section class="panel">
-          <h2>4) Discovery Mode</h2>
+          <h2>4) Alerts</h2>
+          <p class="muted">Get immediate warnings for status flips during dynamic scans.</p>
+          <label class="checkbox-row"><input id="alert-favorable" type="checkbox" checked /> Favorable alerts</label>
+          <label class="checkbox-row"><input id="alert-high-risk" type="checkbox" checked /> High-risk alerts</label>
+          <label class="checkbox-row"><input id="alert-sound" type="checkbox" checked /> Sound buzz</label>
+          <button id="enable-browser-alerts" class="secondary">Enable Browser Popups</button>
+        </section>
+
+        <section class="panel">
+          <h2>4.5) Pro Mode</h2>
+          <label for="risk-preset">Risk Preset</label>
+          <select id="risk-preset">
+            <option value="balanced">Balanced</option>
+            <option value="conservative">Conservative</option>
+            <option value="aggressive">Aggressive</option>
+          </select>
+          <div class="threshold-grid">
+            <label for="threshold-favorable-pattern">Favorable Pattern Min</label>
+            <input id="threshold-favorable-pattern" type="number" min="40" max="95" value="72" />
+            <label for="threshold-risk-kill">Risk Kill-Switch Max</label>
+            <input id="threshold-risk-kill" type="number" min="10" max="90" value="50" />
+            <label for="threshold-connected-max">Connected Holder Max %</label>
+            <input id="threshold-connected-max" type="number" min="5" max="60" value="25" />
+          </div>
+          <button id="apply-pro-preset" class="secondary">Apply Preset</button>
+        </section>
+
+        <section class="panel">
+          <h2>5) Discovery Mode</h2>
           <p class="muted">Find newly launched Solana tokens and add strong candidates into your watchlist.</p>
           <button id="discover-tokens">Find New Token Suggestions</button>
           <div id="discovery-list" class="discovery-list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>6) Manual Mint Scan</h2>
+          <label for="manual-mint">Scan one token mint instantly</label>
+          <input id="manual-mint" type="text" placeholder="Paste Solana mint address" />
+          <button id="scan-manual">Scan Mint</button>
         </section>
       </aside>
 
       <main class="main">
         <section class="panel">
           <div class="row between">
-            <h2>Performance</h2>
+            <h2>Scanner Analytics</h2>
             <span id="scan-status" class="badge">Stopped</span>
           </div>
           <div id="stats-grid" class="stats-grid">
-            <div class="stat"><span>Scans</span><strong>0</strong></div>
-            <div class="stat"><span>Wins</span><strong>0</strong></div>
-            <div class="stat"><span>Losses</span><strong>0</strong></div>
-            <div class="stat"><span>Win Rate</span><strong>0%</strong></div>
-            <div class="stat"><span>Avg PnL</span><strong>0%</strong></div>
-            <div class="stat"><span>Snipes</span><strong>0</strong></div>
+            <div class="stat"><span>Scans Stored</span><strong>0</strong></div>
+            <div class="stat"><span>Watchlist</span><strong>0</strong></div>
+            <div class="stat"><span>Avg Confidence</span><strong>0%</strong></div>
+            <div class="stat"><span>Signal API Used</span><strong>0</strong></div>
+            <div class="stat"><span>Chat API Used</span><strong>0</strong></div>
+            <div class="stat"><span>Recent Signals</span><strong>0</strong></div>
           </div>
+          <p id="stats-meta" class="muted small">
+            Session analytics update after each completed scan batch.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2>How Enigma Works</h2>
+          <div class="guide-grid">
+            <div class="guide-item">
+              <strong>1) Build Watchlist</strong>
+              <p>Add up to 5 Solana mints you want to monitor through the session.</p>
+            </div>
+            <div class="guide-item">
+              <strong>2) Run Dynamic Scan</strong>
+              <p>Scanner refreshes by interval and updates scores, holder behavior, and trade plan zones.</p>
+            </div>
+            <div class="guide-item">
+              <strong>3) Read Risk First</strong>
+              <p>Use Kill-Switch, concentration, authorities, and cluster behavior before considering any entry.</p>
+            </div>
+            <div class="guide-item">
+              <strong>4) Use Alerts + Confirm</strong>
+              <p>Alerts fire on status flips. Always verify on DexScreener/Birdeye/Solscan before action.</p>
+            </div>
+          </div>
+          <p class="muted small">
+            Status meaning: FAVORABLE = cleaner profile, CAUTION = mixed signals, HIGH_RISK = avoid until risk improves.
+          </p>
         </section>
 
         <section class="panel">
@@ -76,8 +159,18 @@
             FAVORABLE if score >= 70 and kill-switch PASS, HIGH_RISK if score < 45 or kill-switch BLOCK.
           </p>
           <p class="muted">
-            This is a scanner, not a guaranteed signal predictor.
+            This is behavioral risk intelligence, not guaranteed trade outcomes.
           </p>
+        </section>
+
+        <section class="panel">
+          <h2>Watchlist Heatmap</h2>
+          <div id="heatmap-strip" class="heatmap-strip"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Session Trend</h2>
+          <div id="session-trend" class="session-trend"></div>
         </section>
 
         <section class="panel">
@@ -85,7 +178,129 @@
             <h2>Live Scanner Results</h2>
             <button id="scan-once" class="secondary">Scan Now</button>
           </div>
+          <div class="result-controls">
+            <label for="result-filter">Filter</label>
+            <select id="result-filter">
+              <option value="all">All</option>
+              <option value="favorable">Favorable</option>
+              <option value="caution">Caution</option>
+              <option value="high_risk">High Risk</option>
+            </select>
+            <label for="result-sort">Sort</label>
+            <select id="result-sort">
+              <option value="pattern_desc">Pattern Score (High-Low)</option>
+              <option value="confidence_desc">Confidence (High-Low)</option>
+              <option value="liquidity_desc">Liquidity (High-Low)</option>
+              <option value="risk_desc">Connected Risk (High-Low)</option>
+            </select>
+          </div>
           <div id="signal-feed" class="signal-feed"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Alert Feed</h2>
+          <div id="alert-feed" class="alert-feed"></div>
+        </section>
+
+        <section class="panel">
+          <div class="row between">
+            <h2>Paper Trade Test Lab</h2>
+            <span id="paper-test-status" class="badge">Idle</span>
+          </div>
+          <p class="muted">
+            Simulate policy-driven entries using live scanner outputs without executing real trades.
+          </p>
+          <div class="paper-config-grid">
+            <label class="checkbox-row"><input id="paper-enabled" type="checkbox" /> Enable paper engine</label>
+            <div>
+              <label for="paper-min-pattern">Min Pattern Score</label>
+              <input id="paper-min-pattern" type="number" min="40" max="95" value="74" />
+            </div>
+            <div>
+              <label for="paper-min-confidence">Min Confidence (0-1)</label>
+              <input id="paper-min-confidence" type="number" min="0.1" max="0.99" step="0.01" value="0.78" />
+            </div>
+            <div>
+              <label for="paper-max-connected">Max Connected Holder %</label>
+              <input id="paper-max-connected" type="number" min="1" max="80" value="20" />
+            </div>
+            <div>
+              <label for="paper-max-position">Max Position USD</label>
+              <input id="paper-max-position" type="number" min="1" max="50000" value="75" />
+            </div>
+            <div>
+              <label for="paper-interval">Run Interval (sec)</label>
+              <input id="paper-interval" type="number" min="10" max="3600" value="30" />
+            </div>
+          </div>
+          <div class="paper-actions">
+            <button id="paper-save-config" class="secondary">Save Paper Config</button>
+            <button id="paper-run-once">Run Paper Test Once</button>
+            <button id="paper-start-loop" class="secondary">Start Paper Loop</button>
+            <button id="paper-stop-loop" class="secondary">Stop Paper Loop</button>
+            <button id="paper-refresh-performance" class="secondary">Refresh Performance</button>
+          </div>
+          <div id="paper-summary" class="msg">No paper test run yet.</div>
+          <div id="paper-results" class="table-wrap"></div>
+          <div id="paper-equity-chart" class="session-trend"></div>
+          <div id="paper-performance-summary" class="paper-performance-grid"></div>
+          <div id="paper-performance-runs" class="table-wrap"></div>
+
+          <h3>Autopilot Execution Engine</h3>
+          <p class="muted">
+            Configure automatic open/close behavior. Engine can run in paper mode or live-ready mode.
+          </p>
+          <div class="paper-config-grid">
+            <label class="checkbox-row"><input id="engine-enabled" type="checkbox" /> Enable execution engine</label>
+            <div>
+              <label for="engine-mode">Engine Mode</label>
+              <select id="engine-mode">
+                <option value="paper">Paper</option>
+                <option value="live">Live</option>
+              </select>
+            </div>
+            <div>
+              <label for="engine-amount">Trade Size USD</label>
+              <input id="engine-amount" type="number" min="1" max="50000" value="25" />
+            </div>
+            <div>
+              <label for="engine-max-open">Max Open Positions</label>
+              <input id="engine-max-open" type="number" min="1" max="50" value="3" />
+            </div>
+            <div>
+              <label for="engine-tp">Take Profit %</label>
+              <input id="engine-tp" type="number" min="0.2" max="200" step="0.1" value="8" />
+            </div>
+            <div>
+              <label for="engine-sl">Stop Loss %</label>
+              <input id="engine-sl" type="number" min="0.2" max="99" step="0.1" value="4" />
+            </div>
+            <div>
+              <label for="engine-trailing">Trailing Stop %</label>
+              <input id="engine-trailing" type="number" min="0.1" max="99" step="0.1" value="3" />
+            </div>
+            <div>
+              <label for="engine-hold-minutes">Max Hold Minutes</label>
+              <input id="engine-hold-minutes" type="number" min="1" max="10080" value="120" />
+            </div>
+            <div>
+              <label for="engine-cooldown">Open Cooldown (sec)</label>
+              <input id="engine-cooldown" type="number" min="0" max="86400" value="30" />
+            </div>
+            <div>
+              <label for="engine-poll">Engine Tick Interval (sec)</label>
+              <input id="engine-poll" type="number" min="5" max="3600" value="15" />
+            </div>
+          </div>
+          <div class="paper-actions">
+            <button id="engine-save-config" class="secondary">Save Engine Config</button>
+            <button id="engine-run-tick">Run Engine Tick Once</button>
+            <button id="engine-start-loop" class="secondary">Start Engine Loop</button>
+            <button id="engine-stop-loop" class="secondary">Stop Engine Loop</button>
+            <button id="engine-refresh-positions" class="secondary">Refresh Positions</button>
+          </div>
+          <div id="engine-summary" class="msg">Engine idle.</div>
+          <div id="engine-open-positions" class="table-wrap"></div>
         </section>
 
         <section class="panel">
@@ -94,6 +309,7 @@
         </section>
       </main>
     </div>
+    <div id="alarm-toast" class="alarm-toast" aria-live="polite"></div>
 
     <script src="/app.js" type="module"></script>
   </body>

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FULSEN Enigma Admin</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>FULSEN Admin Dashboard</h1>
+      <p>Premium plans, managed balances, and withdrawal approvals</p>
+      <div class="nav">
+        <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/manual.html">Manual</a>
+        <a href="/presentation.html">Presentation</a>
+        <a href="/developers.html">Developers</a>
+        <a href="/api-docs.html">API Explorer</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin</a>
+      </div>
+    </header>
+
+    <main class="doc">
+      <section class="doc-card">
+        <h2>Credentials</h2>
+        <p>
+          This page uses <code>ENIGMA_ADMIN_TOKEN</code> from server environment via
+          <code>x-admin-token</code> header.
+        </p>
+        <label for="admin-token">Admin Token</label>
+        <input id="admin-token" type="password" placeholder="Paste ENIGMA_ADMIN_TOKEN" />
+        <div id="admin-status" class="msg">Ready.</div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Update User Plan</h2>
+        <label for="plan-wallet">User Wallet</label>
+        <input id="plan-wallet" type="text" placeholder="Wallet address" />
+
+        <label for="user-plan">Plan</label>
+        <select id="user-plan">
+          <option value="pro">pro (Premium)</option>
+          <option value="free">free</option>
+        </select>
+
+        <button id="save-plan">Update Plan</button>
+        <div id="plan-result" class="msg">No updates yet.</div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Set Managed Balance</h2>
+        <label for="balance-wallet">User Wallet</label>
+        <input id="balance-wallet" type="text" placeholder="Wallet address" />
+
+        <label for="balance-lamports">Balance (lamports)</label>
+        <input id="balance-lamports" type="number" min="0" placeholder="e.g. 50000000" />
+
+        <button id="save-balance">Save Balance</button>
+        <div id="balance-result" class="msg">No balance changes yet.</div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Withdrawal Requests</h2>
+        <div class="paper-controls">
+          <label for="withdraw-filter">Filter</label>
+          <select id="withdraw-filter">
+            <option value="pending">pending</option>
+            <option value="approved">approved</option>
+            <option value="rejected">rejected</option>
+            <option value="all">all</option>
+          </select>
+          <button id="refresh-withdrawals">Refresh</button>
+        </div>
+        <div id="withdrawals-table" class="table-wrap"></div>
+      </section>
+
+      <section class="doc-card">
+        <h2>Admin API Examples</h2>
+        <pre><code>curl -X POST https://your-domain.com/api/admin/users/plan \
+  -H "x-admin-token: &lt;ENIGMA_ADMIN_TOKEN&gt;" \
+  -H "content-type: application/json" \
+  -d '{"wallet":"&lt;USER_WALLET&gt;","plan":"pro"}'
+
+curl -X POST https://your-domain.com/api/admin/users/balance \
+  -H "x-admin-token: &lt;ENIGMA_ADMIN_TOKEN&gt;" \
+  -H "content-type: application/json" \
+  -d '{"wallet":"&lt;USER_WALLET&gt;","lamports":50000000}'</code></pre>
+      </section>
+    </main>
+
+    <script>
+      const tokenInput = document.querySelector("#admin-token");
+      const adminStatus = document.querySelector("#admin-status");
+      const planWallet = document.querySelector("#plan-wallet");
+      const planSelect = document.querySelector("#user-plan");
+      const savePlanBtn = document.querySelector("#save-plan");
+      const planResult = document.querySelector("#plan-result");
+      const balanceWallet = document.querySelector("#balance-wallet");
+      const balanceLamports = document.querySelector("#balance-lamports");
+      const saveBalanceBtn = document.querySelector("#save-balance");
+      const balanceResult = document.querySelector("#balance-result");
+      const filterSelect = document.querySelector("#withdraw-filter");
+      const refreshWithdrawalsBtn = document.querySelector("#refresh-withdrawals");
+      const withdrawalsTable = document.querySelector("#withdrawals-table");
+
+      const savedToken = localStorage.getItem("enigma_admin_token") || "";
+      if (savedToken) tokenInput.value = savedToken;
+
+      function toSol(lamports) {
+        return (Number(lamports || 0) / 1_000_000_000).toLocaleString(undefined, {
+          maximumFractionDigits: 6
+        });
+      }
+
+      function setMsg(el, text, tone = "") {
+        el.className = `msg ${tone}`.trim();
+        el.textContent = text;
+      }
+
+      function getToken() {
+        const token = String(tokenInput.value || "").trim();
+        if (!token) throw new Error("Admin token is required");
+        localStorage.setItem("enigma_admin_token", token);
+        return token;
+      }
+
+      async function adminApi(path, init = {}) {
+        const token = getToken();
+        const response = await fetch(path, {
+          ...init,
+          headers: {
+            "content-type": "application/json",
+            "x-admin-token": token,
+            ...(init.headers || {})
+          }
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "request failed");
+        return payload;
+      }
+
+      function renderWithdrawals(rows) {
+        if (!rows?.length) {
+          withdrawalsTable.innerHTML = `<div class="msg">No withdrawal requests.</div>`;
+          return;
+        }
+
+        withdrawalsTable.innerHTML = `
+          <table class="paper-results-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User Wallet</th>
+                <th>Destination</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows
+                .map(
+                  (r) => `
+                <tr>
+                  <td>${r.id}</td>
+                  <td><code>${String(r.userWallet || "").slice(0, 6)}...${String(r.userWallet || "").slice(-6)}</code></td>
+                  <td><code>${String(r.destinationWallet || "").slice(0, 6)}...${String(r.destinationWallet || "").slice(-6)}</code></td>
+                  <td>${toSol(r.lamports)} SOL</td>
+                  <td>${r.status}</td>
+                  <td>${new Date(r.created_at).toLocaleString()}</td>
+                  <td>
+                    ${
+                      r.status === "pending"
+                        ? `<button data-action="approve" data-id="${r.id}">Approve</button>
+                           <button data-action="reject" data-id="${r.id}">Reject</button>`
+                        : "-"
+                    }
+                  </td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      async function loadWithdrawals() {
+        try {
+          const value = String(filterSelect.value || "pending");
+          const qs = value === "all" ? "" : `?status=${encodeURIComponent(value)}`;
+          const data = await adminApi(`/api/admin/withdrawals${qs}`);
+          renderWithdrawals(data.requests || []);
+          setMsg(adminStatus, `Loaded ${(data.requests || []).length} withdrawal requests.`, "ok");
+        } catch (error) {
+          setMsg(adminStatus, String(error.message || error), "error");
+        }
+      }
+
+      savePlanBtn?.addEventListener("click", async () => {
+        try {
+          savePlanBtn.disabled = true;
+          const data = await adminApi("/api/admin/users/plan", {
+            method: "POST",
+            body: JSON.stringify({
+              wallet: String(planWallet.value || "").trim(),
+              plan: String(planSelect.value || "pro")
+            })
+          });
+          setMsg(planResult, `Updated ${data.user.wallet} to ${data.user.plan}.`, "ok");
+        } catch (error) {
+          setMsg(planResult, String(error.message || error), "error");
+        } finally {
+          savePlanBtn.disabled = false;
+        }
+      });
+
+      saveBalanceBtn?.addEventListener("click", async () => {
+        try {
+          saveBalanceBtn.disabled = true;
+          const lamports = Number(balanceLamports.value || 0);
+          const data = await adminApi("/api/admin/users/balance", {
+            method: "POST",
+            body: JSON.stringify({
+              wallet: String(balanceWallet.value || "").trim(),
+              lamports
+            })
+          });
+          setMsg(
+            balanceResult,
+            `Balance set for ${data.user.wallet}: ${toSol(data.balance.lamports)} SOL.`,
+            "ok"
+          );
+        } catch (error) {
+          setMsg(balanceResult, String(error.message || error), "error");
+        } finally {
+          saveBalanceBtn.disabled = false;
+        }
+      });
+
+      refreshWithdrawalsBtn?.addEventListener("click", () => {
+        loadWithdrawals();
+      });
+
+      withdrawalsTable?.addEventListener("click", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement)) return;
+
+        const action = String(target.dataset.action || "");
+        const id = Number(target.dataset.id || 0);
+        if (!id || (action !== "approve" && action !== "reject")) return;
+
+        try {
+          target.disabled = true;
+          const endpoint =
+            action === "approve"
+              ? `/api/admin/withdrawals/${id}/approve`
+              : `/api/admin/withdrawals/${id}/reject`;
+          const data = await adminApi(endpoint, { method: "POST", body: JSON.stringify({}) });
+          setMsg(adminStatus, `${action}d withdrawal #${id}.`, "ok");
+          renderWithdrawals(
+            (await adminApi(`/api/admin/withdrawals?status=${encodeURIComponent(String(filterSelect.value || "pending"))}`)).requests || []
+          );
+          if (data?.request?.status) {
+            setMsg(adminStatus, `Withdrawal #${id} is now ${data.request.status}.`, "ok");
+          }
+        } catch (error) {
+          setMsg(adminStatus, String(error.message || error), "error");
+        } finally {
+          target.disabled = false;
+        }
+      });
+
+      loadWithdrawals();
+    </script>
+  </body>
+</html>
