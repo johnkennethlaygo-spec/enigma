@@ -21,7 +21,7 @@
     "qa": "npm run build && npm run test && npm run qa:extended"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.4",
