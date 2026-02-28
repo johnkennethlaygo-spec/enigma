@@ -1,9 +1,8 @@
 name: Render Deploy
 
 on:
-  workflow_run:
-    workflows: ["Enigma CI"]
-    types: [completed]
+  push:
+    branches: ["main"]
   workflow_dispatch:
 
 concurrency:
@@ -13,16 +12,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: >
-      (
-        github.event_name == 'workflow_dispatch' ||
-        (
-          github.event_name == 'workflow_run' &&
-          github.event.workflow_run.conclusion == 'success' &&
-          github.event.workflow_run.head_branch == 'main'
-        )
-      ) &&
-      secrets.RENDER_DEPLOY_HOOK_URL != ''
+    if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
     steps:
       - name: Trigger Render Deploy Hook
         env:
@@ -35,15 +25,7 @@ jobs:
 
   deploy-skipped:
     runs-on: ubuntu-latest
-    if: >
-      (
-        github.event_name == 'workflow_dispatch' ||
-        (
-          github.event_name == 'workflow_run' &&
-          github.event.workflow_run.head_branch == 'main'
-        )
-      ) &&
-      secrets.RENDER_DEPLOY_HOOK_URL == ''
+    if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
     steps:
       - name: Explain Missing Secret
         run: |
