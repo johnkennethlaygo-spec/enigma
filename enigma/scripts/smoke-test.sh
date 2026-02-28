@@ -7,6 +7,10 @@ cd "$ROOT_DIR"
 LOG_FILE="/tmp/enigma_smoke_web.log"
 : > "$LOG_FILE"
 
+export NODE_ENV=development
+export ENIGMA_JWT_SECRET="enigma-smoke-secret"
+export SOLANA_RPC_URL="${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}"
+
 cleanup() {
   if [[ -n "${WEB_PID:-}" ]]; then
     kill "$WEB_PID" >/dev/null 2>&1 || true
@@ -18,14 +22,19 @@ trap cleanup EXIT
 npm run web > "$LOG_FILE" 2>&1 &
 WEB_PID=$!
 
-for _ in $(seq 1 40); do
-  if grep -q "Enigma web running at" "$LOG_FILE"; then
+for _ in $(seq 1 60); do
+  if grep -qE 'http://localhost:[0-9]+' "$LOG_FILE"; then
     break
+  fi
+  if ! kill -0 "$WEB_PID" >/dev/null 2>&1; then
+    echo "[smoke] server process exited before startup"
+    tail -n 120 "$LOG_FILE"
+    exit 1
   fi
   sleep 1
 done
 
-PORT="$(grep -oE 'http://localhost:[0-9]+' "$LOG_FILE" | tail -n1 | cut -d: -f3)"
+PORT="$(grep -oE 'http://localhost:[0-9]+' "$LOG_FILE" | tail -n1 | cut -d: -f3 || true)"
 if [[ -z "$PORT" ]]; then
   echo "[smoke] server failed to start"
   tail -n 80 "$LOG_FILE"
