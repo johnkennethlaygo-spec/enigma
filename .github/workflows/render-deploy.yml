@@ -1,0 +1,50 @@
+name: Render Deploy
+
+on:
+  workflow_run:
+    workflows: ["Enigma CI"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: render-deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: >
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main'
+        )
+      ) &&
+      secrets.RENDER_DEPLOY_HOOK_URL != ''
+    steps:
+      - name: Trigger Render Deploy Hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+          echo "[render-deploy] triggering deploy hook"
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo "[render-deploy] hook triggered"
+
+  deploy-skipped:
+    runs-on: ubuntu-latest
+    if: >
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.head_branch == 'main'
+        )
+      ) &&
+      secrets.RENDER_DEPLOY_HOOK_URL == ''
+    steps:
+      - name: Explain Missing Secret
+        run: |
+          echo "[render-deploy] skipped: set repository secret RENDER_DEPLOY_HOOK_URL to enable auto-deploy."
