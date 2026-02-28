@@ -54,6 +54,13 @@ curl -sS \
   -H "Authorization: Bearer $TOKEN" \
   -H 'content-type: application/json' \
   -X POST \
+  -d '{"mint":"So11111111111111111111111111111111111111112"}' \
+  "http://localhost:$PORT/api/signal" > /tmp/enigma_smoke_signal.json
+
+curl -sS \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
+  -X POST \
   -d '{"limit":3}' \
   "http://localhost:$PORT/api/discovery/suggest" > /tmp/enigma_smoke_discovery.json
 
@@ -73,6 +80,7 @@ function must(cond, msg) {
 
 const watchlist = JSON.parse(fs.readFileSync('/tmp/enigma_smoke_watchlist.json', 'utf8'));
 const scan = JSON.parse(fs.readFileSync('/tmp/enigma_smoke_scan.json', 'utf8'));
+const singleSignal = JSON.parse(fs.readFileSync('/tmp/enigma_smoke_signal.json', 'utf8'));
 const discovery = JSON.parse(fs.readFileSync('/tmp/enigma_smoke_discovery.json', 'utf8'));
 const stats = JSON.parse(fs.readFileSync('/tmp/enigma_smoke_stats.json', 'utf8'));
 
@@ -86,6 +94,29 @@ if (firstScan.ok) {
   must(firstScan.signal && typeof firstScan.signal === 'object', 'ok scan item should include signal object');
   must(firstScan.signal.token && typeof firstScan.signal.token === 'object', 'signal should include token metadata');
   must(typeof firstScan.signal.status === 'string', 'signal should include status');
+}
+
+must(singleSignal && singleSignal.signal && typeof singleSignal.signal === 'object', '/api/signal should return signal object');
+must(singleSignal.signal.marketRegime && typeof singleSignal.signal.marketRegime === 'object', 'signal should include marketRegime');
+const currentRegime = singleSignal.signal.marketRegime.current || {};
+must(
+  typeof currentRegime.timeframe === 'string' && currentRegime.timeframe.length > 0,
+  'marketRegime.current.timeframe should be populated'
+);
+must(
+  typeof currentRegime.regime === 'string' && currentRegime.regime.length > 0,
+  'marketRegime.current.regime should be populated'
+);
+if (currentRegime.volatilityIndex !== null) {
+  must(
+    Number.isFinite(Number(currentRegime.volatilityIndex)) &&
+      Number(currentRegime.volatilityIndex) >= 0 &&
+      Number(currentRegime.volatilityIndex) <= 100,
+    'marketRegime.current.volatilityIndex should be null or 0-100'
+  );
+}
+if (currentRegime.adx !== null) {
+  must(Number.isFinite(Number(currentRegime.adx)), 'marketRegime.current.adx should be null or numeric');
 }
 
 must(Array.isArray(discovery.items), 'discovery should return items array');

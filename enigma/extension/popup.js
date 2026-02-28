@@ -23,7 +23,7 @@ const investorPreview = document.querySelector("#investor-preview");
 
 function setStatus(text, tone = "") {
   statusEl.textContent = text;
-  statusEl.style.color = tone === "error" ? "#ff8787" : tone === "ok" ? "#8cffbf" : "#e8f2ff";
+  statusEl.style.color = tone === "error" ? "#8c2f2f" : tone === "ok" ? "#225f3d" : "#5f4123";
 }
 
 function parsePumpFunMintFromUrl(url) {

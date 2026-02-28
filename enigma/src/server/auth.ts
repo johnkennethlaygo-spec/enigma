@@ -34,7 +34,7 @@ export function verifyWalletSignature(wallet: string, nonce: string, signature: 
     } catch {
       sig = Buffer.from(signature, "base64");
     }
-    const message = new TextEncoder().encode(`Enigma login nonce: ${nonce}`);
+    const message = new TextEncoder().encode(`KOBECOIN login nonce: ${nonce}`);
     return nacl.sign.detached.verify(message, sig, publicKey);
   } catch {
     return false;

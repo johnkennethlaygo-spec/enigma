@@ -3,20 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Enigma Solana Scanner</title>
+    <title>Kobecoin AI Guardian Solana Scanner</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="app">
       <aside class="sidebar">
-        <h1>Enigma</h1>
-        <p class="muted">FULSEN | Solana behavioral scanner</p>
+        <h1>Kobecoin AI Guardian</h1>
+        <p class="muted">KOBECOIN | AI Guardian Scanner + Trading Agent Intelligence</p>
 
         <section class="panel">
           <h2>Developer Docs</h2>
-          <p class="muted">API, CLI, browser extension, and Pump.fun integration instructions.</p>
+          <p class="muted">Risk-first infrastructure for traders: API, CLI, browser extension, watchlist intelligence, and policy-controlled execution.</p>
           <a class="doc-link-btn" href="/start.html">Open Start Here</a>
           <a class="doc-link-btn" href="/profile.html">Open Profile</a>
+          <a class="doc-link-btn" href="/manual.html">Open Manual</a>
+          <a class="doc-link-btn" href="/presentation.html">Open Presentation</a>
           <a class="doc-link-btn" href="/developers.html">Open Developer Docs</a>
           <a class="doc-link-btn" href="/extension-preview.html">Open Extension Prototype</a>
           <a class="doc-link-btn" href="/api-docs.html">Open API Explorer</a>
@@ -118,7 +120,7 @@
         </section>
 
         <section class="panel">
-          <h2>How Enigma Works</h2>
+          <h2>How Kobecoin AI Guardian Works</h2>
           <div class="guide-grid">
             <div class="guide-item">
               <strong>1) Build Watchlist</strong>
@@ -140,12 +142,15 @@
           <p class="muted small">
             Status meaning: FAVORABLE = cleaner profile, CAUTION = mixed signals, HIGH_RISK = avoid until risk improves.
           </p>
+          <p class="muted small">
+            Core promise: deep-analyze a mint before entry, detect hidden wallet behavior, monitor live risk shifts, and support disciplined execution decisions.
+          </p>
         </section>
 
         <section class="panel">
           <h2>Scanner Methodology</h2>
           <p class="muted">
-            Enigma Scanner v1 scores behavior and risk, then maps to FAVORABLE/CAUTION/HIGH_RISK.
+            Kobecoin AI Guardian Scanner v1 is a structured verdict engine. It fuses behavioral risk, liquidity, participation, and momentum into a single actionable outcome.
           </p>
           <ul class="method-list">
             <li>45% Kill-Switch score (holder concentration + authority risk)</li>
@@ -202,104 +207,149 @@
           <div id="alert-feed" class="alert-feed"></div>
         </section>
 
-        <section class="panel">
+        <section class="panel trade-lab">
           <div class="row between">
-            <h2>Paper Trade Test Lab</h2>
+            <h2>Trading Console (Manual + Agent)</h2>
             <span id="paper-test-status" class="badge">Idle</span>
           </div>
           <p class="muted">
-            Simulate policy-driven entries using live scanner outputs without executing real trades.
+            Clear two-step model: first validate decisions in paper mode, then run managed execution with strict risk rules.
           </p>
-          <div class="paper-config-grid">
-            <label class="checkbox-row"><input id="paper-enabled" type="checkbox" /> Enable paper engine</label>
-            <div>
-              <label for="paper-min-pattern">Min Pattern Score</label>
-              <input id="paper-min-pattern" type="number" min="40" max="95" value="74" />
-            </div>
-            <div>
-              <label for="paper-min-confidence">Min Confidence (0-1)</label>
-              <input id="paper-min-confidence" type="number" min="0.1" max="0.99" step="0.01" value="0.78" />
-            </div>
-            <div>
-              <label for="paper-max-connected">Max Connected Holder %</label>
-              <input id="paper-max-connected" type="number" min="1" max="80" value="20" />
-            </div>
-            <div>
-              <label for="paper-max-position">Max Position USD</label>
-              <input id="paper-max-position" type="number" min="1" max="50000" value="75" />
-            </div>
-            <div>
-              <label for="paper-interval">Run Interval (sec)</label>
-              <input id="paper-interval" type="number" min="10" max="3600" value="30" />
-            </div>
+
+          <div class="trade-console-grid">
+            <article class="trade-console-card">
+              <h3>Manual Test Flow (Paper)</h3>
+              <p class="small muted">
+                This section simulates entries from your watchlist and shows what the agent would do before any live capital is used.
+              </p>
+              <label class="checkbox-row"><input id="paper-enabled" type="checkbox" /> Enable paper policy engine</label>
+              <div class="quick-amount-row">
+                <span class="small muted">Test Risk Size</span>
+                <div class="quick-amount-buttons" data-target-input="paper-max-position">
+                  <button type="button" class="secondary quick-amount-btn" data-amount="25">$25</button>
+                  <button type="button" class="secondary quick-amount-btn" data-amount="50">$50</button>
+                  <button type="button" class="secondary quick-amount-btn" data-amount="100">$100</button>
+                </div>
+              </div>
+              <div class="trade-config-grid">
+                <div>
+                  <label for="paper-min-pattern">Min Pattern Score</label>
+                  <input id="paper-min-pattern" type="number" min="40" max="95" value="74" />
+                </div>
+                <div>
+                  <label for="paper-min-confidence">Min Confidence (0-1)</label>
+                  <input id="paper-min-confidence" type="number" min="0.1" max="0.99" step="0.01" value="0.78" />
+                </div>
+                <div>
+                  <label for="paper-max-connected">Max Connected Holder %</label>
+                  <input id="paper-max-connected" type="number" min="1" max="80" value="20" />
+                </div>
+                <div>
+                  <label for="paper-max-position">Max Position USD</label>
+                  <input id="paper-max-position" type="number" min="1" max="50000" value="75" />
+                </div>
+                <div>
+                  <label for="paper-interval">Run Interval (sec)</label>
+                  <input id="paper-interval" type="number" min="10" max="3600" value="30" />
+                </div>
+              </div>
+              <div class="paper-actions">
+                <button id="paper-save-config" class="secondary">Save Paper Policy</button>
+                <button id="paper-run-once">Run One Manual Test</button>
+                <button id="paper-start-loop" class="secondary">Start Paper Loop</button>
+                <button id="paper-stop-loop" class="secondary">Stop Paper Loop</button>
+                <button id="paper-refresh-performance" class="secondary">Refresh Paper Metrics</button>
+              </div>
+            </article>
+
+            <article class="trade-console-card">
+              <h3>Autopilot Execution Engine</h3>
+              <p class="small muted">
+                This section controls open/close logic. It uses your risk policy and can run in paper or live mode (PRO + execution enabled).
+              </p>
+              <label class="checkbox-row"><input id="engine-enabled" type="checkbox" /> Enable execution engine</label>
+              <div class="trade-config-grid">
+                <div>
+                  <label for="engine-mode">Engine Mode</label>
+                  <select id="engine-mode">
+                    <option value="paper">Paper</option>
+                    <option value="live">Live</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="engine-max-open">Max Open Positions</label>
+                  <input id="engine-max-open" type="number" min="1" max="50" value="3" />
+                </div>
+                <div>
+                  <label for="engine-amount">Trade Size USD</label>
+                  <input id="engine-amount" type="number" min="1" max="50000" value="25" />
+                </div>
+                <div>
+                  <label for="engine-poll">Engine Tick Interval (sec)</label>
+                  <input id="engine-poll" type="number" min="5" max="3600" value="15" />
+                </div>
+              </div>
+              <div class="quick-amount-row">
+                <span class="small muted">Quick Trade Size</span>
+                <div class="quick-amount-buttons" data-target-input="engine-amount">
+                  <button type="button" class="secondary quick-amount-btn" data-amount="25">$25</button>
+                  <button type="button" class="secondary quick-amount-btn" data-amount="50">$50</button>
+                  <button type="button" class="secondary quick-amount-btn" data-amount="100">$100</button>
+                </div>
+              </div>
+              <div class="quick-amount-row">
+                <span class="small muted">Exit Strategy Presets</span>
+                <div class="quick-amount-buttons">
+                  <button type="button" class="secondary quick-amount-btn" data-engine-preset="scalp">Scalp</button>
+                  <button type="button" class="secondary quick-amount-btn" data-engine-preset="balanced">Balanced</button>
+                  <button type="button" class="secondary quick-amount-btn" data-engine-preset="swing">Swing</button>
+                </div>
+              </div>
+              <div class="trade-config-grid">
+                <div>
+                  <label for="engine-tp">Take Profit %</label>
+                  <input id="engine-tp" type="number" min="0.2" max="200" step="0.1" value="8" />
+                </div>
+                <div>
+                  <label for="engine-sl">Stop Loss %</label>
+                  <input id="engine-sl" type="number" min="0.2" max="99" step="0.1" value="4" />
+                </div>
+                <div>
+                  <label for="engine-trailing">Trailing Stop %</label>
+                  <input id="engine-trailing" type="number" min="0.1" max="99" step="0.1" value="3" />
+                </div>
+                <div>
+                  <label for="engine-hold-minutes">Max Hold Minutes</label>
+                  <input id="engine-hold-minutes" type="number" min="1" max="10080" value="120" />
+                </div>
+                <div>
+                  <label for="engine-cooldown">Open Cooldown (sec)</label>
+                  <input id="engine-cooldown" type="number" min="0" max="86400" value="30" />
+                </div>
+              </div>
+              <div class="paper-actions">
+                <button id="engine-save-config" class="secondary">Save Engine Rules</button>
+                <button id="engine-run-tick">Run One Engine Tick</button>
+                <button id="engine-start-loop" class="secondary">Start Engine Loop</button>
+                <button id="engine-stop-loop" class="secondary">Stop Engine Loop</button>
+                <button id="engine-refresh-positions" class="secondary">Refresh Open Positions</button>
+              </div>
+              <div id="engine-summary" class="msg">Engine idle.</div>
+            </article>
           </div>
-          <div class="paper-actions">
-            <button id="paper-save-config" class="secondary">Save Paper Config</button>
-            <button id="paper-run-once">Run Paper Test Once</button>
-            <button id="paper-start-loop" class="secondary">Start Paper Loop</button>
-            <button id="paper-stop-loop" class="secondary">Stop Paper Loop</button>
-            <button id="paper-refresh-performance" class="secondary">Refresh Performance</button>
-          </div>
+
+          <p class="small muted execution-note">
+            Logic order: scan -> policy gate -> candidate selection -> engine open/close rules. Live mode needs PRO plan and <code>ENIGMA_EXECUTION_ENABLED=1</code>.
+          </p>
+
+          <h3>Manual Test Results</h3>
           <div id="paper-summary" class="msg">No paper test run yet.</div>
           <div id="paper-results" class="table-wrap"></div>
           <div id="paper-equity-chart" class="session-trend"></div>
           <div id="paper-performance-summary" class="paper-performance-grid"></div>
           <div id="paper-performance-runs" class="table-wrap"></div>
 
-          <h3>Autopilot Execution Engine</h3>
-          <p class="muted">
-            Configure automatic open/close behavior. Engine can run in paper mode or live-ready mode.
-          </p>
-          <div class="paper-config-grid">
-            <label class="checkbox-row"><input id="engine-enabled" type="checkbox" /> Enable execution engine</label>
-            <div>
-              <label for="engine-mode">Engine Mode</label>
-              <select id="engine-mode">
-                <option value="paper">Paper</option>
-                <option value="live">Live</option>
-              </select>
-            </div>
-            <div>
-              <label for="engine-amount">Trade Size USD</label>
-              <input id="engine-amount" type="number" min="1" max="50000" value="25" />
-            </div>
-            <div>
-              <label for="engine-max-open">Max Open Positions</label>
-              <input id="engine-max-open" type="number" min="1" max="50" value="3" />
-            </div>
-            <div>
-              <label for="engine-tp">Take Profit %</label>
-              <input id="engine-tp" type="number" min="0.2" max="200" step="0.1" value="8" />
-            </div>
-            <div>
-              <label for="engine-sl">Stop Loss %</label>
-              <input id="engine-sl" type="number" min="0.2" max="99" step="0.1" value="4" />
-            </div>
-            <div>
-              <label for="engine-trailing">Trailing Stop %</label>
-              <input id="engine-trailing" type="number" min="0.1" max="99" step="0.1" value="3" />
-            </div>
-            <div>
-              <label for="engine-hold-minutes">Max Hold Minutes</label>
-              <input id="engine-hold-minutes" type="number" min="1" max="10080" value="120" />
-            </div>
-            <div>
-              <label for="engine-cooldown">Open Cooldown (sec)</label>
-              <input id="engine-cooldown" type="number" min="0" max="86400" value="30" />
-            </div>
-            <div>
-              <label for="engine-poll">Engine Tick Interval (sec)</label>
-              <input id="engine-poll" type="number" min="5" max="3600" value="15" />
-            </div>
-          </div>
-          <div class="paper-actions">
-            <button id="engine-save-config" class="secondary">Save Engine Config</button>
-            <button id="engine-run-tick">Run Engine Tick Once</button>
-            <button id="engine-start-loop" class="secondary">Start Engine Loop</button>
-            <button id="engine-stop-loop" class="secondary">Stop Engine Loop</button>
-            <button id="engine-refresh-positions" class="secondary">Refresh Positions</button>
-          </div>
-          <div id="engine-summary" class="msg">Engine idle.</div>
+          <h3>Autopilot Open Positions</h3>
           <div id="engine-open-positions" class="table-wrap"></div>
         </section>
 

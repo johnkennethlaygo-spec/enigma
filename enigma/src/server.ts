@@ -65,7 +65,7 @@ function validateRuntimeConfig(): { mode: string; hasRpc: boolean } {
 }
 
 const runtimeConfig = validateRuntimeConfig();
-const PREMIUM_TELEGRAM = String(process.env.ENIGMA_PREMIUM_TELEGRAM || "@FULSEN_SUPPORT").trim();
+const PREMIUM_TELEGRAM = String(process.env.ENIGMA_PREMIUM_TELEGRAM || "@KOBECOIN_SUPPORT").trim();
 const ADMIN_TOKEN = String(process.env.ENIGMA_ADMIN_TOKEN || "").trim();
 const PREMIUM_SOL_ADDRESS = String(
   process.env.ENIGMA_PREMIUM_SOL_ADDRESS || "ZEe2kStwjE8SNs61Vcrdmn63JHxrKAEswNg5Nex3sVe"
@@ -135,7 +135,7 @@ function requireAdminToken(req: express.Request, res: express.Response): boolean
 const openApiSpec = {
   openapi: "3.0.3",
   info: {
-    title: "FULSEN Enigma API",
+    title: "KOBECOIN AI Guardian API",
     version: "1.0.0",
     description: "Trader risk-intelligence API for scan, watchlist, discovery, and holder behavior."
   },
@@ -360,6 +360,21 @@ const openApiSpec = {
         responses: { "200": { description: "Updated watchlist" } }
       }
     },
+    "/api/watchlist/add": {
+      post: {
+        summary: "Add one mint to watchlist",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { type: "object", required: ["mint"], properties: { mint: { type: "string" } } }
+            }
+          }
+        },
+        responses: { "200": { description: "Updated watchlist" } }
+      }
+    },
     "/api/signal": {
       post: {
         summary: "Scan single mint",
@@ -428,6 +443,37 @@ const openApiSpec = {
         summary: "Dashboard stats",
         security: [{ bearerAuth: [] }],
         responses: { "200": { description: "Usage and performance stats" } }
+      }
+    },
+    "/api/auth/me": {
+      get: {
+        summary: "Get authenticated user profile and stats",
+        security: [{ bearerAuth: [] }],
+        responses: { "200": { description: "Authenticated user profile" } }
+      }
+    },
+    "/api/forecast/resolve": {
+      post: {
+        summary: "Resolve signal outcome for feedback learning",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["signalId", "won", "pnlPct"],
+                properties: {
+                  signalId: { type: "number" },
+                  won: { type: "boolean" },
+                  pnlPct: { type: "number" },
+                  note: { type: "string" }
+                }
+              }
+            }
+          }
+        },
+        responses: { "200": { description: "Forecast resolved" } }
       }
     },
     "/api/autotrade/config": {
@@ -803,7 +849,7 @@ app.post("/api/auth/nonce", (req, res) => {
 
   const nonce = generateNonce();
   putNonce(wallet, nonce);
-  return res.json({ nonce, message: `Enigma login nonce: ${nonce}` });
+  return res.json({ nonce, message: `KOBECOIN login nonce: ${nonce}` });
 });
 
 app.post("/api/auth/verify", (req, res) => {
@@ -1164,9 +1210,9 @@ app.get("/api/health", async (_req, res) => {
 
   res.json({
     ok: true,
-    app: "Enigma",
+    app: "KOBECOIN AI Guardian",
     role: "Solana signal scanner",
-    boundaries: ["No trade execution", "Probabilistic signals"],
+    boundaries: ["Execution is optional and policy-gated", "Probabilistic signals"],
     helius
   });
 });
@@ -1842,7 +1888,7 @@ app.get("*", (_req, res) => {
 
 function startServer(port: number, retriesLeft = 10): void {
   const server = app.listen(port, host, () => {
-    console.log(`Enigma web running at http://localhost:${port}`);
+    console.log(`KOBECOIN AI Guardian web running at http://localhost:${port}`);
     console.log(
       `[config] mode=${runtimeConfig.mode} rpc=${runtimeConfig.hasRpc ? "configured" : "missing"}`
     );

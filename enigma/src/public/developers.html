@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FULSEN Enigma Developer Docs</title>
+    <title>KOBECOIN AI Guardian Developer Docs</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="hero">
-      <h1>FULSEN Enigma Developer Docs</h1>
+      <h1>KOBECOIN AI Guardian Developer Docs</h1>
       <p>Production integration guide for API, CLI, browser extension, and partner platforms</p>
       <div class="nav">
         <a href="/">Dashboard</a>
@@ -20,21 +20,21 @@
         <a href="/extension-preview.html">Extension Preview</a>
         <a href="/api-docs.html">API Explorer</a>
         <a href="/premium.html">Premium</a>
-        <a href="/admin.html">Admin Premium</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </header>
 
     <main class="doc">
       <section class="doc-card">
         <h2>1) Product + Integration Scope</h2>
-        <p><strong>FULSEN Enigma</strong> is a Solana risk-intelligence layer designed for traders and trading platforms.</p>
+        <p><strong>KOBECOIN AI Guardian</strong> is a Solana risk-intelligence layer designed for traders and trading platforms.</p>
         <ul>
           <li>Pre-entry token behavior analysis (kill-switch, concentration, authorities, connected holders)</li>
           <li>Live watchlist monitoring and status flips</li>
           <li>Holder behavior table for deeper due diligence</li>
           <li>Execution-ready architecture via external routers (for example Jupiter Ultra)</li>
         </ul>
-        <p><strong>Boundary:</strong> Enigma defaults to non-execution mode. Auto execution is opt-in and should run only with dedicated risk-configured bot wallets.</p>
+        <p><strong>Boundary:</strong> Kobecoin AI Guardian defaults to non-execution mode. Auto execution is opt-in and should run only with dedicated risk-configured bot wallets.</p>
       </section>
 
       <section class="doc-card">
@@ -47,7 +47,7 @@ HELIUS_API_KEY=&lt;key&gt;
 # Optional alternative:
 # SOLANA_RPC_URL=&lt;https-rpc-endpoint&gt;</code></pre>
         <ul>
-          <li><strong>Operator-only keys:</strong> all env keys on this page are for FULSEN backend operations.</li>
+          <li><strong>Operator-only keys:</strong> all env keys on this page are for KOBECOIN backend operations.</li>
           <li><strong>User-side:</strong> users only connect wallet and use app flows; they do not provide Helius/Jupiter/admin keys.</li>
           <li>Set <code>ENIGMA_JWT_SECRET</code> to a long random value.</li>
           <li>Configure either <code>HELIUS_API_KEY</code> or <code>SOLANA_RPC_URL</code>.</li>
@@ -139,30 +139,30 @@ HELIUS_API_KEY=&lt;key&gt;
         <h2>6) Jupiter Ultra Execution Bridge</h2>
         <p>Recommended execution chain:</p>
         <ol>
-          <li>Risk Gate: Enigma scan + policy decision</li>
+          <li>Risk Gate: Kobecoin AI Guardian scan + policy decision</li>
           <li>Quote/Order: Jupiter <code>/ultra/v1/order</code></li>
           <li>Signing: user wallet signs base64 tx</li>
           <li>Execute: Jupiter <code>/ultra/v1/execute</code></li>
-          <li>Monitor: Enigma live scan loop + alerts</li>
+          <li>Monitor: Kobecoin AI Guardian live scan loop + alerts</li>
         </ol>
-        <p>Best practice: never execute when Enigma verdict is <code>HIGH_RISK</code> unless trader explicitly overrides.</p>
+        <p>Best practice: never execute when Kobecoin AI Guardian verdict is <code>HIGH_RISK</code> unless trader explicitly overrides.</p>
       </section>
 
       <section class="doc-card">
         <h2>7) Browser Extension Architecture (Manifest V3)</h2>
         <ul>
           <li>Content script reads token mint from Pump.fun route/DOM.</li>
-          <li>Background service worker authenticates with Enigma API.</li>
+          <li>Background service worker authenticates with Kobecoin AI Guardian API.</li>
           <li>Popup/side panel displays verdict, reasons, and risk trend.</li>
           <li>Use extension notifications + sound on status flip and threshold breach.</li>
         </ul>
         <pre><code>{
   "manifest_version": 3,
-  "name": "FULSEN Enigma Guard",
+  "name": "KOBECOIN AI Guardian Guard",
   "permissions": ["storage", "notifications", "activeTab", "scripting"],
   "host_permissions": [
     "https://pump.fun/*",
-    "https://your-enigma-domain.com/*"
+    "https://your-kobecoin-domain.com/*"
   ]
 }</code></pre>
         <p>
@@ -172,7 +172,7 @@ HELIUS_API_KEY=&lt;key&gt;
         </p>
         <ol>
           <li>Open <code>chrome://extensions</code>, enable Developer Mode.</li>
-          <li>Load unpacked folder <code>enigma/extension</code>.</li>
+          <li>Load unpacked folder <code>&lt;project-root&gt;/extension</code>.</li>
           <li>Set API base URL + JWT in popup.</li>
           <li>Enable auto-scan and open side panel for live history.</li>
           <li>Open Pump.fun token page; extension detects mint, scans, and can add it to watchlist in one click.</li>
@@ -181,8 +181,8 @@ HELIUS_API_KEY=&lt;key&gt;
 
       <section class="doc-card">
         <h2>8) CLI Usage (Local and Ops)</h2>
-        <pre><code>git clone &lt;repo&gt;
-cd enigma/enigma
+<pre><code>git clone &lt;repo&gt;
+cd &lt;project-root&gt;
 npm install
 cp .env.example .env
 npm run build
@@ -195,7 +195,7 @@ npm run enigma -- journal --note "Entry cancelled due to kill-switch warning"</c
 
       <section class="doc-card">
         <h2>9) Selling the API to Other Companies</h2>
-        <p>Recommended commercial model for FULSEN:</p>
+        <p>Recommended commercial model for KOBECOIN:</p>
         <ul>
           <li>Issue customer API keys at gateway layer (mapped to tenant account).</li>
           <li>Tier plans by request volume, watchlist size, and SLA priority.</li>
@@ -245,7 +245,7 @@ npm run enigma -- journal --note "Entry cancelled due to kill-switch warning"</c
 
       <section class="doc-card">
         <h2>12) Production Summary</h2>
-        <p>Enigma is now positioned as a trader safety + execution-intelligence layer:</p>
+        <p>Kobecoin AI Guardian is now positioned as a trader safety + execution-intelligence layer:</p>
         <ul>
           <li>UI scanner for discretionary users</li>
           <li>API platform for partner integrations</li>
@@ -261,6 +261,8 @@ npm run enigma -- journal --note "Entry cancelled due to kill-switch warning"</c
           <li>Default mode is <code>paper</code> and disabled</li>
           <li>Only <code>FAVORABLE</code> signals that pass thresholds become buy candidates</li>
           <li>Live mode can execute Jupiter swaps when execution env + signer are configured</li>
+          <li>Dashboard trading UI maps directly to these endpoints: <code>Manual Test Flow</code> -> <code>/api/autotrade/config</code> and <code>/api/autotrade/run</code>, <code>Autopilot Execution Engine</code> -> <code>/api/autotrade/execution-config</code> and <code>/api/autotrade/engine/tick</code></li>
+          <li>UI guardrails normalize invalid exits automatically (<code>SL</code> and <code>trailingStopPct</code> remain below <code>tpPct</code>) before saving execution config</li>
         </ul>
         <pre><code>curl -X PUT https://your-domain.com/api/autotrade/config \
   -H "authorization: Bearer &lt;JWT&gt;" \
@@ -302,6 +304,18 @@ npm run enigma -- journal --note "Entry cancelled due to kill-switch warning"</c
         <p><strong>Security policy:</strong> never paste private keys into browser UI or app server config. Use dedicated signer/HSM worker for production live execution.</p>
         <p><strong>Premium policy:</strong> keep live mode as <code>pro</code> only. Users contact your Telegram, then you upgrade them using the admin endpoint.</p>
         <p><strong>Optional auto-upgrade:</strong> users can pay on-chain and submit tx signature to <code>/api/premium/verify-payment</code> for automatic activation.</p>
+      </section>
+
+      <section class="doc-card">
+        <h2>14) Market Regime Tuning Notes</h2>
+        <ul>
+          <li><strong>ADX period:</strong> default <code>14</code>. Increase to smooth noise, decrease for faster response.</li>
+          <li><strong>Volatility window N:</strong> ATR percentile uses last <code>200</code> ATR samples by default.</li>
+          <li><strong>Regime thresholds:</strong> defaults are <code>ADX 25</code> for trending and <code>VolatilityIndex 60</code> for expanding volatility.</li>
+          <li><strong>Cache TTL:</strong> candle cache defaults to <code>ENIGMA_CANDLE_CACHE_TTL_SEC=60</code> to avoid recalculating every render.</li>
+          <li><strong>Regime cache TTL:</strong> market regime summary cache defaults to <code>ENIGMA_MARKET_REGIME_CACHE_TTL_SEC=45</code>.</li>
+          <li><strong>Timeframes supported:</strong> <code>5m</code>, <code>15m</code>, <code>1h</code>, <code>4h</code>, <code>1d</code>; scanner prefers <code>1h</code> and falls back automatically when data is insufficient.</li>
+        </ul>
       </section>
     </main>
   </body>

@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FULSEN Enigma Premium Checkout</title>
+    <title>KOBECOIN AI Guardian Premium Checkout</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="hero">
-      <h1>FULSEN Premium Checkout</h1>
+      <h1>KOBECOIN Premium Checkout</h1>
       <p>Pay on-chain, submit transaction signature, and auto-activate your premium access</p>
       <div class="nav">
         <a href="/">Dashboard</a>
@@ -17,9 +17,10 @@
         <a href="/manual.html">Manual</a>
         <a href="/presentation.html">Presentation</a>
         <a href="/developers.html">Developers</a>
+        <a href="/extension-preview.html">Extension Preview</a>
         <a href="/api-docs.html">API Explorer</a>
         <a href="/premium.html">Premium</a>
-        <a href="/admin.html">Admin Premium</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </header>
 
@@ -32,12 +33,12 @@
           <li>Paste transaction signature and submit verification.</li>
           <li>Your wallet plan upgrades to <code>pro</code> automatically if valid.</li>
         </ol>
-        <p><strong>User reminder:</strong> you only need Phantom + transaction signature. Backend API keys are managed internally by FULSEN.</p>
+        <p><strong>User reminder:</strong> you only need Phantom + transaction signature. Backend API keys are managed internally by KOBECOIN.</p>
       </section>
 
       <section class="doc-card">
         <h2>Payment Details</h2>
-        <p><strong>Telegram Support:</strong> <span id="premium-telegram">@FULSEN_SUPPORT</span></p>
+        <p><strong>Telegram Support:</strong> <span id="premium-telegram">@KOBECOIN_SUPPORT</span></p>
         <label for="premium-address">Payment Address</label>
         <div class="mint-row">
           <code id="premium-address">Loading...</code>
@@ -92,7 +93,7 @@
         }
 
         premiumAddress.textContent = payload.paymentAddress || "N/A";
-        premiumTelegram.textContent = payload.telegram || "@FULSEN_SUPPORT";
+        premiumTelegram.textContent = payload.telegram || "@KOBECOIN_SUPPORT";
         const tiers = payload.tiers || {};
         premiumTiers.innerHTML = `
           <table class="paper-results-table">

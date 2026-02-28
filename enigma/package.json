@@ -15,7 +15,8 @@
     "web": "tsx src/server.ts",
     "enigma": "tsx src/cli.ts",
     "lint": "eslint . --ext .ts",
-    "test": "bash ./scripts/smoke-test.sh",
+    "test": "bash ./scripts/smoke-test.sh && npm run -s test:unit",
+    "test:unit": "tsx --test tests/**/*.test.ts",
     "qa:extended": "bash ./scripts/extended-qa.sh",
     "qa": "npm run build && npm run test && npm run qa:extended"
   },

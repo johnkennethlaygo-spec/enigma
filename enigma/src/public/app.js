@@ -1,3 +1,5 @@
+import { buildMarketRegimeViewModel } from "./marketRegimeView.js";
+
 const authState = document.querySelector("#auth-state");
 const watchlistTokenInput = document.querySelector("#watchlist-token-input");
 const watchlistChips = document.querySelector("#watchlist-chips");
@@ -107,6 +109,32 @@ const riskPresets = {
   balanced: { favorablePatternMin: 72, riskKillMax: 50, connectedMax: 25 },
   aggressive: { favorablePatternMin: 66, riskKillMax: 40, connectedMax: 34 }
 };
+const engineExitPresets = {
+  scalp: {
+    tpPct: 4,
+    slPct: 2,
+    trailingStopPct: 1.5,
+    maxHoldMinutes: 45,
+    cooldownSec: 15,
+    pollIntervalSec: 10
+  },
+  balanced: {
+    tpPct: 8,
+    slPct: 4,
+    trailingStopPct: 3,
+    maxHoldMinutes: 120,
+    cooldownSec: 30,
+    pollIntervalSec: 15
+  },
+  swing: {
+    tpPct: 14,
+    slPct: 6,
+    trailingStopPct: 4.5,
+    maxHoldMinutes: 360,
+    cooldownSec: 45,
+    pollIntervalSec: 20
+  }
+};
 const alertThresholds = {
   favorablePatternMin: Number(localStorage.getItem("enigma_threshold_fav_pattern") || 72),
   riskKillMax: Number(localStorage.getItem("enigma_threshold_risk_kill") || 50),
@@ -143,6 +171,22 @@ function formatUsd(value) {
   return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
+function formatUsdPrice(value) {
+  const n = Number(value || 0);
+  if (!Number.isFinite(n) || n <= 0) return "N/A";
+  if (n >= 1000) return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  if (n >= 1) {
+    return `$${n.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    })}`;
+  }
+  if (n >= 0.01) {
+    return `$${n.toLocaleString(undefined, { maximumFractionDigits: 8 })}`;
+  }
+  return `$${n.toFixed(12).replace(/0+$/, "").replace(/\.$/, "")}`;
+}
+
 function formatPrice(value) {
   const n = Number(value || 0);
   if (!Number.isFinite(n) || n <= 0) return "N/A";
@@ -154,6 +198,62 @@ function formatPct(value, digits = 2) {
   const n = Number(value || 0);
   if (!Number.isFinite(n)) return "0%";
   return `${n.toFixed(digits)}%`;
+}
+
+function buildBeginnerSentimentLines(signal) {
+  const plainLanguage = signal?.sentiment?.plainLanguage || {};
+  if (plainLanguage.current || plainLanguage.action || plainLanguage.coverage) {
+    return [
+      String(plainLanguage.current || "").trim(),
+      String(plainLanguage.action || "").trim(),
+      String(plainLanguage.coverage || "").trim()
+    ].filter(Boolean);
+  }
+
+  const status = String(signal?.status || "HIGH_RISK");
+  const killVerdict = String(signal?.killSwitch?.verdict || "N/A");
+  const killScore = Number(signal?.killSwitch?.score || 0);
+  const patternScore = Number(signal?.patternScore || 0);
+  const confidence = Number(signal?.confidence || 0);
+  const priceChange24h = Number(signal?.market?.priceChange24hPct || 0);
+  const connectedPct = Number(signal?.killSwitch?.risk?.holderBehavior?.connectedHolderPct || 0);
+  const newWalletPct = Number(signal?.killSwitch?.risk?.holderBehavior?.newWalletHolderPct || 0);
+  const buys24h = Number(signal?.sentiment?.orderFlow?.buys24h || 0);
+  const sells24h = Number(signal?.sentiment?.orderFlow?.sells24h || 0);
+  const buyRatio = Number(signal?.sentiment?.orderFlow?.buyRatio || 0.5);
+
+  const nowLine = `Now: ${status} because kill-switch is ${killVerdict} (${formatNumber(killScore, 0)}/100), pattern is ${formatNumber(patternScore, 1)}/100, and confidence is ${formatNumber(confidence, 2)}.`;
+
+  const flowLine = `Flow: ${formatNumber(buys24h, 0)} buys vs ${formatNumber(sells24h, 0)} sells in 24h (${formatNumber(
+    buyRatio * 100,
+    1
+  )}% buy-side) with 24h price move ${formatPct(priceChange24h, 2)}.`;
+
+  const behaviorLine = `Holder behavior: connected-wallet exposure ${formatPct(
+    connectedPct,
+    2
+  )}, new-wallet exposure ${formatPct(newWalletPct, 2)}. Higher values usually increase manipulation risk.`;
+
+  let actionLine =
+    "Action: stay patient and wait for clearer confirmation near support before sizing up.";
+  if (status === "FAVORABLE") {
+    actionLine =
+      "Action: setup looks cleaner right now, but still confirm with volume/price reaction at support before entry.";
+  } else if (status === "HIGH_RISK") {
+    actionLine =
+      "Action: avoid fresh entries until kill-switch risk and holder behavior improve.";
+  }
+
+  return [nowLine, flowLine, behaviorLine, actionLine];
+}
+
+function holderCoverageNote(holderBehavior) {
+  const coverage = holderBehavior?.analysisCoverage || {};
+  const topAccounts = Number(coverage.topAccountsAnalyzed || holderBehavior?.analyzedTopAccounts || 0);
+  const buySellLimit = Number(coverage.buySellTxSamplePerAccount || 8);
+  const sampledAccounts = Number(coverage.accountsWithBuySellSampling || 5);
+  const signatureLimit = Number(coverage.signatureSamplePerAccount || 20);
+  return `Coverage note: analyzed top ${topAccounts} holder accounts; buy/sell counts are sampled from the most recent ${buySellLimit} token-account transactions for up to ${sampledAccounts} holders; cluster links use recent ${signatureLimit} signatures per account. This is not full lifetime wallet history.`;
 }
 
 const walletSourceDescriptions = {
@@ -304,7 +404,7 @@ function triggerAlert(text, tone = "info") {
   const permission = window.Notification?.permission || "denied";
   if (permission === "granted" && document.hidden) {
     try {
-      new window.Notification("Enigma Alert", { body: text });
+      new window.Notification("Kobecoin Guardian Alert", { body: text });
     } catch {
       // Ignore notification errors in unsupported environments.
     }
@@ -430,7 +530,7 @@ function renderHeatmap(items = []) {
         <div class="heat-cell ${tone}" title="Pattern ${formatNumber(signal.patternScore || 0, 1)} | Kill ${formatNumber(signal.killSwitch?.score || 0, 0)} | Connected ${formatPct(signal.killSwitch?.risk?.holderBehavior?.connectedHolderPct || 0, 1)}">
           <strong>${escapeHtml(symbol)}</strong>
           <span>${escapeHtml(String(signal.status || "N/A"))}</span>
-          <em>${formatUsd(market.priceUsd || 0)}</em>
+          <em>${formatUsdPrice(market.priceUsd || 0)}</em>
         </div>
       `;
     })
@@ -681,6 +781,7 @@ function syncPaperConfigUi(config) {
   if (paperMaxConnectedInput) paperMaxConnectedInput.value = String(config.maxConnectedHolderPct ?? 20);
   if (paperMaxPositionInput) paperMaxPositionInput.value = String(config.maxPositionUsd ?? 75);
   if (paperIntervalInput) paperIntervalInput.value = String(config.scanIntervalSec ?? 30);
+  syncQuickAmountButtonState();
 }
 
 function readPaperConfigFromUi() {
@@ -891,6 +992,7 @@ function syncEngineConfigUi(config) {
   if (engineHoldMinutesInput) engineHoldMinutesInput.value = String(config.maxHoldMinutes ?? 120);
   if (engineCooldownInput) engineCooldownInput.value = String(config.cooldownSec ?? 30);
   if (enginePollInput) enginePollInput.value = String(config.pollIntervalSec ?? 15);
+  syncQuickAmountButtonState();
 }
 
 function readEngineConfigFromUi() {
@@ -906,6 +1008,86 @@ function readEngineConfigFromUi() {
     cooldownSec: Math.max(0, Math.min(86400, Number(engineCooldownInput?.value || 30))),
     pollIntervalSec: Math.max(5, Math.min(3600, Number(enginePollInput?.value || 15)))
   };
+}
+
+function normalizeEngineConfig(config) {
+  const next = { ...config };
+  const warnings = [];
+
+  if (next.slPct >= next.tpPct) {
+    next.slPct = Math.max(0.2, Number((next.tpPct * 0.7).toFixed(2)));
+    warnings.push(`Stop-loss was adjusted to ${next.slPct}% so it remains below take-profit.`);
+  }
+  if (next.trailingStopPct >= next.tpPct) {
+    next.trailingStopPct = Math.max(0.1, Number((next.tpPct * 0.6).toFixed(2)));
+    warnings.push(
+      `Trailing stop was adjusted to ${next.trailingStopPct}% so it remains below take-profit.`
+    );
+  }
+
+  return { config: next, warnings };
+}
+
+function applyEnginePreset(name) {
+  const preset = engineExitPresets[name] || engineExitPresets.balanced;
+  if (engineTpInput) engineTpInput.value = String(preset.tpPct);
+  if (engineSlInput) engineSlInput.value = String(preset.slPct);
+  if (engineTrailingInput) engineTrailingInput.value = String(preset.trailingStopPct);
+  if (engineHoldMinutesInput) engineHoldMinutesInput.value = String(preset.maxHoldMinutes);
+  if (engineCooldownInput) engineCooldownInput.value = String(preset.cooldownSec);
+  if (enginePollInput) enginePollInput.value = String(preset.pollIntervalSec);
+  pushMessage(
+    `Applied ${name} preset: TP ${preset.tpPct}% / SL ${preset.slPct}% / Trail ${preset.trailingStopPct}% / Hold ${preset.maxHoldMinutes}m`,
+    "info"
+  );
+}
+
+function syncQuickAmountButtonState() {
+  document
+    .querySelectorAll(".quick-amount-buttons[data-target-input]")
+    .forEach((group) => {
+      const targetId = String(group.getAttribute("data-target-input") || "");
+      if (!targetId) return;
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const current = Number(input.value || 0);
+      group.querySelectorAll("button[data-amount]").forEach((button) => {
+        const amount = Number(button.getAttribute("data-amount") || 0);
+        if (Math.abs(current - amount) < 0.0001) {
+          button.classList.add("active");
+        } else {
+          button.classList.remove("active");
+        }
+      });
+    });
+}
+
+function bindTradeConsoleControls() {
+  document
+    .querySelectorAll(".quick-amount-buttons[data-target-input] button[data-amount]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const group = button.closest(".quick-amount-buttons[data-target-input]");
+        const targetId = String(group?.getAttribute("data-target-input") || "");
+        if (!targetId) return;
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        input.value = String(Number(button.getAttribute("data-amount") || 0));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        syncQuickAmountButtonState();
+      });
+    });
+
+  document.querySelectorAll("button[data-engine-preset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const preset = String(button.getAttribute("data-engine-preset") || "balanced");
+      applyEnginePreset(preset);
+    });
+  });
+
+  paperMaxPositionInput?.addEventListener("input", syncQuickAmountButtonState);
+  engineAmountInput?.addEventListener("input", syncQuickAmountButtonState);
+  syncQuickAmountButtonState();
 }
 
 function renderEnginePositions(positions = []) {
@@ -951,7 +1133,6 @@ function renderEnginePositions(positions = []) {
     </table>
   `;
 }
-}
 
 async function loadPaperPerformance() {
   if (!authToken) return;
@@ -968,13 +1149,16 @@ async function loadEngineConfig() {
 async function saveEngineConfig() {
   setButtonBusy(engineSaveConfigButton, true, "Saving...");
   try {
+    const normalized = normalizeEngineConfig(readEngineConfigFromUi());
+    const payload = normalized.config;
     const response = await api(
       "/api/autotrade/execution-config",
-      readEngineConfigFromUi(),
+      payload,
       true,
       "PUT"
     );
     syncEngineConfigUi(response.config || {});
+    normalized.warnings.forEach((warning) => pushMessage(warning, "info"));
     pushMessage("Engine config saved", "ok");
     return response.config || null;
   } catch (error) {
@@ -1049,10 +1233,14 @@ async function loadPaperConfig() {
   syncPaperConfigUi(response.config || {});
 }
 
-async function savePaperConfig() {
+async function savePaperConfig(options = {}) {
   setButtonBusy(paperSaveConfigButton, true, "Saving...");
   try {
     const payload = readPaperConfigFromUi();
+    if (options.forceEnabled) {
+      payload.enabled = true;
+      if (paperEnabledInput) paperEnabledInput.checked = true;
+    }
     const response = await api("/api/autotrade/config", payload, true, "PUT");
     const currentEngine = await api("/api/autotrade/execution-config", null, true, "GET");
     await api(
@@ -1081,7 +1269,7 @@ async function runPaperTradeOnce() {
   setButtonBusy(paperRunOnceButton, true, "Running...");
   setPaperStatus("Running", "busy");
   try {
-    const savedConfig = await savePaperConfig();
+    const savedConfig = await savePaperConfig({ forceEnabled: true });
     const response = await api("/api/autotrade/run", {}, true, "POST");
     if (savedConfig) syncPaperConfigUi(savedConfig);
     paperRunHistory.unshift(response);
@@ -1093,9 +1281,15 @@ async function runPaperTradeOnce() {
       `Paper run completed: ${response.summary?.buyCandidates || 0} candidates, ${response.summary?.skipped || 0} skipped`,
       "ok"
     );
+    return true;
   } catch (error) {
     setPaperStatus("Error", "error");
-    pushMessage(`Paper run failed: ${error.message}`, "error");
+    if (String(error.message || "").includes("autotrade is disabled")) {
+      pushMessage("Paper run blocked: paper mode was disabled. It is now auto-enabled, retrying is safe.", "error");
+    } else {
+      pushMessage(`Paper run failed: ${error.message}`, "error");
+    }
+    return false;
   } finally {
     setButtonBusy(paperRunOnceButton, false);
   }
@@ -1105,9 +1299,12 @@ async function startPaperLoop() {
   setButtonBusy(paperStartLoopButton, true, "Starting...");
   try {
     stopPaperLoop();
-    await savePaperConfig();
+    await savePaperConfig({ forceEnabled: true });
     const intervalSec = Math.max(10, Number(paperIntervalInput?.value || 30));
-    await runPaperTradeOnce();
+    const ok = await runPaperTradeOnce();
+    if (!ok) {
+      throw new Error("initial paper run failed; loop was not started");
+    }
     paperTradeTimer = setInterval(async () => {
       await runPaperTradeOnce();
     }, intervalSec * 1000);
@@ -1214,6 +1411,8 @@ function signalCard(item) {
   const sentiment = signal.sentiment || {};
   const tradePlan = signal.tradePlan || {};
   const riskFlags = Array.isArray(risk.suspiciousPatterns) ? risk.suspiciousPatterns : [];
+  const beginnerLines = buildBeginnerSentimentLines(signal);
+  const regimeVm = buildMarketRegimeViewModel(signal.marketRegime || {});
 
   const status = String(signal.status || "HIGH_RISK");
   const confidence = Number(signal.confidence || 0);
@@ -1241,7 +1440,7 @@ function signalCard(item) {
           ${sparklineSvg(signal.miniChart?.points || [])}
         </div>
         <div class="token-price-box">
-          <strong>${formatUsd(market.priceUsd || 0)}</strong>
+          <strong>${formatUsdPrice(market.priceUsd || 0)}</strong>
           <span class="pill ${status.toLowerCase()}">${escapeHtml(status.replace("_", " "))}</span>
         </div>
       </div>
@@ -1256,6 +1455,9 @@ function signalCard(item) {
             <span>Sentiment</span>
             <strong>${escapeHtml(sentiment.label || "Neutral")} (${formatNumber(sentiment.score || 50, 0)}/100)</strong>
             <p>${escapeHtml(sentiment.summary || "Sentiment data unavailable.")}</p>
+            <ul class="sentiment-notes">
+              ${beginnerLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}
+            </ul>
           </div>
           <div class="mini-grid">
             <div><span>Concentration</span><strong>${escapeHtml(risk.concentrationRisk || "unknown")}</strong></div>
@@ -1270,6 +1472,35 @@ function signalCard(item) {
                   .map((flag) => `<span class="risk-flag">${escapeHtml(flag)}</span>`)
                   .join("")}</div>`
               : `<div class="risk-flags"><span class="risk-flag neutral">No elevated risk flags in this pass.</span></div>`
+          }
+        </section>
+
+        <section class="intel-box regime-box">
+          <h4>Market Regime</h4>
+          <div class="risk-strip ${escapeHtml(regimeVm.tone)}">
+            ${escapeHtml(regimeVm.regime)} (${escapeHtml(regimeVm.timeframe)})
+          </div>
+          <div class="mini-grid regime-grid">
+            <div>
+              <span>Volatility Index (0-100)</span>
+              <strong>${escapeHtml(regimeVm.volatilityText)}</strong>
+              <small>${escapeHtml(regimeVm.volatilityLabel)} (${escapeHtml(regimeVm.volatilityBand)})</small>
+            </div>
+            <div>
+              <span>ADX(14)</span>
+              <strong>${escapeHtml(regimeVm.adxText)}</strong>
+              <small>${escapeHtml(regimeVm.adxLabel)}</small>
+            </div>
+            <div>
+              <span>Suggested Strategy</span>
+              <strong>${escapeHtml(regimeVm.strategyHint)}</strong>
+              <small>Preferred timeframe ${escapeHtml(regimeVm.timeframe)}</small>
+            </div>
+          </div>
+          ${
+            regimeVm.note
+              ? `<p class="small muted regime-note">${escapeHtml(regimeVm.note)}</p>`
+              : `<p class="small muted regime-note">Regime thresholds: ADX trend strength + ATR percentile volatility.</p>`
           }
         </section>
 
@@ -1299,6 +1530,7 @@ function signalCard(item) {
           <span>Groups: <strong>${formatNumber(holderBehavior.connectedGroupCount || 0, 0)}</strong></span>
           <span>Avg Wallet Age: <strong>${formatNumber(holderBehavior.avgWalletAgeDays || 0, 1)}d</strong></span>
         </div>
+        <p class="small muted">${escapeHtml(holderCoverageNote(holderBehavior))}</p>
         ${sourceLegendHtml()}
 
         <div class="table-wrap">
@@ -1833,6 +2065,7 @@ engineRefreshPositionsButton?.addEventListener("click", async () => {
   }
 });
 
+bindTradeConsoleControls();
 setAuthState();
 syncAlertUi();
 syncThresholdUi();
@@ -1846,4 +2079,4 @@ if (engineSummary) engineSummary.textContent = "Engine idle.";
 hydrateSession();
 pushMessage("Workflow: connect wallet -> add watchlist mints -> save -> start dynamic scan.", "info");
 pushMessage("Read Risk Analysis first. Trade Plan is guidance, not execution or financial advice.", "info");
-pushMessage("Paper Trade Test Lab: run simulated policy entries before any live execution.", "info");
+pushMessage("Trading Console: run Manual Test Flow first, then start Autopilot Engine only after paper results are stable.", "info");

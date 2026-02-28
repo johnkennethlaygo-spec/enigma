@@ -1,8 +1,22 @@
+:root {
+  --bg: #f5e4b1;
+  --panel: #fff6df;
+  --line: #d2ad64;
+  --line-soft: #e5c98a;
+  --text: #4a2f16;
+  --muted: #7f5b35;
+  --ok: #2d8758;
+  --warn: #9a6a2d;
+  --error: #8e3f3f;
+}
+
 body {
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: #071328;
-  color: #ecf4ff;
+  font-family: "Rajdhani", "Space Grotesk", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 92% 2%, rgba(241, 177, 76, 0.2), transparent 36%),
+    linear-gradient(180deg, #f8ebbc 0%, #f2dc9e 100%);
+  color: var(--text);
 }
 
 main {
@@ -13,6 +27,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 h1 {
@@ -23,23 +38,25 @@ h1 {
 h2 {
   font-size: 13px;
   margin: 12px 0 8px;
+  color: var(--muted);
 }
 
 button {
-  border: 1px solid #2d5f95;
-  background: #15355c;
-  color: #d9ebff;
+  border: 1px solid #c48b3e;
+  background: linear-gradient(180deg, #f6d793, #eebf63);
+  color: #4b2f15;
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
+  font-weight: 700;
 }
 
 .card {
   margin-top: 10px;
-  border: 1px solid #2a507e;
+  border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px;
-  background: #0e2342;
+  background: var(--panel);
 }
 
 .badge {
@@ -47,22 +64,26 @@ button {
   border-radius: 999px;
   padding: 3px 8px;
   font-size: 11px;
-  border: 1px solid #3f6da0;
+  border: 1px solid var(--line);
+  background: #fff2d3;
 }
 
 .badge.FAVORABLE {
-  color: #9bffca;
-  border-color: #2a965c;
+  color: #205239;
+  border-color: var(--ok);
+  background: rgba(42, 182, 115, 0.14);
 }
 
 .badge.CAUTION {
-  color: #ffd28f;
-  border-color: #a16c2e;
+  color: #6d4b1f;
+  border-color: var(--warn);
+  background: rgba(212, 158, 47, 0.16);
 }
 
 .badge.HIGH_RISK {
-  color: #ff9f9f;
-  border-color: #a63c3c;
+  color: #712d2d;
+  border-color: var(--error);
+  background: rgba(163, 58, 58, 0.16);
 }
 
 .history {
@@ -71,10 +92,10 @@ button {
 }
 
 .item {
-  border: 1px solid #223f65;
+  border: 1px solid var(--line-soft);
   border-radius: 8px;
   padding: 8px;
-  background: #0b1d37;
+  background: #fff1d1;
   font-size: 12px;
 }
 

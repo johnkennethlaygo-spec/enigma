@@ -1,11 +1,11 @@
-# FULSEN Enigma Guard Extension (MV3)
+# KOBECOIN AI Guardian Guard Extension (MV3)
 
 ## What this extension does
 - Detects Pump.fun token mint from current tab URL
 - Auto-scans on navigation (toggleable)
-- Sends mint to your Enigma backend `/api/signal`
+- Sends mint to your KOBECOIN backend `/api/signal`
 - Shows structured verdict (`FAVORABLE` / `CAUTION` / `HIGH_RISK`) and key risk fields
-- One-click add mint to Enigma watchlist (`/api/watchlist/add`)
+- One-click add mint to KOBECOIN watchlist (`/api/watchlist/add`)
 - Side panel with latest verdict + scan history
 
 ## Install (Developer mode)
@@ -22,7 +22,7 @@
 5. Click `Save Settings`
 
 ## JWT token source
-- Connect wallet in Enigma web app (`/`)
+- Connect wallet in KOBECOIN web app (`/`)
 - Open browser devtools console and run:
   - `localStorage.getItem("enigma_token")`
 - Paste token into extension popup
@@ -35,7 +35,7 @@
 5. Click `Open Side Panel` to monitor rolling scan history
 
 ## Investor preview page
-- Open: `/extension-preview.html` on your Enigma web app
+- Open: `/extension-preview.html` on your KOBECOIN web app
 - This page presents the extension product narrative and prototype flow for stakeholders
 
 ## Security note

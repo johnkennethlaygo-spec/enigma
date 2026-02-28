@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FULSEN Enigma Extension Prototype</title>
+    <title>KOBECOIN AI Guardian Extension Prototype</title>
     <link rel="stylesheet" href="/styles.css" />
     <style>
       .proto {
@@ -21,14 +21,16 @@
       .proto-card {
         border: 1px solid var(--line);
         border-radius: 14px;
-        background: linear-gradient(180deg, rgba(26,50,84,0.7), rgba(10,22,44,0.9));
+        background: linear-gradient(180deg, rgba(255, 249, 232, 0.98), rgba(246, 228, 181, 0.95));
         padding: 14px;
       }
       .proto-stage {
-        border: 1px solid #2e5d91;
+        border: 1px solid #cfa764;
         border-radius: 16px;
         padding: 14px;
-        background: radial-gradient(circle at 90% 0%, rgba(47,112,188,.2), transparent 35%), #0c1f3d;
+        background:
+          radial-gradient(circle at 90% 0%, rgba(241, 177, 76, 0.24), transparent 35%),
+          linear-gradient(180deg, rgba(255, 249, 232, 0.98), rgba(244, 223, 169, 0.95));
       }
       .mock {
         display: grid;
@@ -36,15 +38,15 @@
         gap: 12px;
       }
       .mock-box {
-        border: 1px solid #2a5587;
+        border: 1px solid var(--line);
         border-radius: 10px;
-        background: #0b1a33;
+        background: #fff5dd;
         padding: 10px;
       }
       .mock-line {
         height: 10px;
         border-radius: 999px;
-        background: #294f7d;
+        background: #d9b475;
         margin: 8px 0;
       }
       .mock-line.good { background: #2f8e5a; }
@@ -58,12 +60,18 @@
   </head>
   <body>
     <header class="hero">
-      <h1>FULSEN Enigma Extension Prototype</h1>
+      <h1>KOBECOIN AI Guardian Extension Prototype</h1>
       <p>Investor preview: Pump.fun-native risk guardian and trading co-pilot</p>
       <div class="nav">
         <a href="/">Dashboard</a>
+        <a href="/start.html">Start Here</a>
+        <a href="/profile.html">Profile</a>
+        <a href="/manual.html">Manual</a>
         <a href="/presentation.html">Presentation</a>
         <a href="/developers.html">Developers</a>
+        <a href="/api-docs.html">API Explorer</a>
+        <a href="/premium.html">Premium</a>
+        <a href="/admin.html">Admin</a>
         <a href="/extension-preview.html">Extension Preview</a>
       </div>
     </header>
@@ -71,7 +79,7 @@
     <main class="proto">
       <section class="proto-stage">
         <h2>Prototype Storyboard</h2>
-        <p class="muted">A trader opens a Pump.fun token, Enigma scans instantly, flags hidden risk, and suggests action before capital is deployed.</p>
+        <p class="muted">A trader opens a Pump.fun token, Kobecoin AI Guardian scans instantly, flags hidden risk, and suggests action before capital is deployed.</p>
         <div class="mock">
           <div class="mock-box">
             <h3>Popup Scan</h3>
@@ -96,7 +104,7 @@
       <section class="proto-grid">
         <article class="proto-card">
           <h3>1) Auto-Scan Navigation</h3>
-          <p>As users move token-to-token on Pump.fun, Enigma triggers background scans and surfaces risk status in real time.</p>
+          <p>As users move token-to-token on Pump.fun, Kobecoin AI Guardian triggers background scans and surfaces risk status in real time.</p>
         </article>
         <article class="proto-card">
           <h3>2) Risk-First Verdict</h3>
@@ -104,7 +112,7 @@
         </article>
         <article class="proto-card">
           <h3>3) Action Layer</h3>
-          <p>One-click “Add to Watchlist,” notification alerts, and follow-up monitoring from your core Enigma app.</p>
+          <p>One-click “Add to Watchlist,” notification alerts, and follow-up monitoring from your core Kobecoin AI Guardian app.</p>
         </article>
       </section>
 
@@ -122,7 +130,7 @@
         <h2>Launch CTA</h2>
         <ol>
           <li>Install extension from <code>/extension</code> (developer mode).</li>
-          <li>Use wallet JWT from Enigma web app.</li>
+          <li>Use wallet JWT from Kobecoin AI Guardian web app.</li>
           <li>Start with auto-scan + watchlist mode.</li>
           <li>Upgrade to pro for live-execution workflows.</li>
         </ol>

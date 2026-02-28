@@ -1,5 +1,6 @@
 import type { AgentContext } from "../agent/schema.js";
 import { killSwitch } from "../workflows/killSwitch.js";
+import { buildMarketRegime } from "./marketRegime.js";
 
 interface DexScreenerTokenResponse {
   pairs?: Array<{
@@ -92,6 +93,10 @@ function toPrice(value: number): number {
   return Number(value.toPrecision(8));
 }
 
+function fmtPct(value: number): string {
+  return `${Number(value || 0).toFixed(2)}%`;
+}
+
 function buildMiniChart(price: number, changes: { m5: number; h1: number; h6: number; h24: number }) {
   if (!price || price <= 0) return { points: [], labels: ["24h", "6h", "1h", "5m", "now"] };
 
@@ -107,6 +112,12 @@ function buildMiniChart(price: number, changes: { m5: number; h1: number; h6: nu
 
 export async function generateSignal(context: AgentContext, mint: string): Promise<Record<string, unknown>> {
   const [kill, snapshot] = await Promise.all([killSwitch(context, mint), fetchMarketSnapshot(mint)]);
+  const marketRegime = await buildMarketRegime({
+    pairAddress: String(snapshot.pairAddress || ""),
+    preferredTimeframe: "1h",
+    limit: 240,
+    includeAllTimeframes: false
+  });
 
   const killScore = Number(kill.data.score || 0);
   const killVerdict = String(kill.data.verdict || "BLOCK");
@@ -125,6 +136,8 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
   const buys24h = Number(snapshot.buys24h || 0);
   const sells24h = Number(snapshot.sells24h || 0);
   const orderFlow = buys24h + sells24h > 0 ? buys24h / (buys24h + sells24h) : 0.5;
+  const connectedHolderPct = Number(holderBehavior.connectedHolderPct || 0);
+  const newWalletHolderPct = Number(holderBehavior.newWalletHolderPct || 0);
 
   let patternScore =
     killScore * 0.45 + liquidityScore * 0.2 + participationScore * 0.15 + momentumScore * 0.2;
@@ -170,10 +183,23 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
     `Liquidity: $${liquidity.toLocaleString()}`,
     `Participation (vol/liquidity): ${(volume / Math.max(liquidity, 1)).toFixed(2)}`,
     `24h price change: ${change24h.toFixed(2)}%`,
-    `Connected holders: ${Number(holderBehavior.connectedHolderPct || 0).toFixed(2)}%`,
-    `New-wallet holders: ${Number(holderBehavior.newWalletHolderPct || 0).toFixed(2)}%`,
-    `Order flow (24h): buys ${buys24h}, sells ${sells24h}`
+    `Connected holders: ${connectedHolderPct.toFixed(2)}%`,
+    `New-wallet holders: ${newWalletHolderPct.toFixed(2)}%`,
+    `Order flow (24h): buys ${buys24h}, sells ${sells24h}`,
+    `Market regime (${marketRegime.current.timeframe}): ${marketRegime.current.regime} | Vol ${marketRegime.current.volatilityIndex ?? "N/A"} | ADX ${marketRegime.current.adx ?? "N/A"}`
   ];
+
+  const beginnerSummary =
+    `Status is ${status}: kill-switch ${killVerdict} (${killScore}/100), pattern ${patternScore.toFixed(2)}/100, confidence ${clamp((patternScore / 100) * 0.9 + 0.1, 0.1, 0.98).toFixed(2)}. ` +
+    `24h flow shows ${buys24h} buys vs ${sells24h} sells (${(orderFlow * 100).toFixed(1)}% buy-side), with price move ${fmtPct(change24h)}. ` +
+    `Holder behavior is ${fmtPct(connectedHolderPct)} connected-wallet exposure and ${fmtPct(newWalletHolderPct)} new-wallet exposure.`;
+
+  const beginnerAction =
+    status === "FAVORABLE"
+      ? "Setup is cleaner right now, but still confirm support reaction and position sizing before entry."
+      : status === "CAUTION"
+        ? "Mixed conditions; watch for stronger confirmation before entering."
+        : "Risk is elevated; avoid fresh entries until behavior and kill-switch metrics improve.";
 
   return {
     mint,
@@ -190,6 +216,7 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
     killSwitch: kill.data,
     holderBehavior,
     market: snapshot,
+    marketRegime,
     tradePlan: {
       recommendation:
         status === "FAVORABLE"
@@ -216,7 +243,13 @@ export async function generateSignal(context: AgentContext, mint: string): Promi
           ? "Buy pressure and momentum currently favor upside continuation."
           : sentimentLabel === "Bearish"
             ? "Sell pressure and risk behavior currently dominate."
-            : "Mixed flow; wait for cleaner confirmation."
+            : "Mixed flow; wait for cleaner confirmation.",
+      plainLanguage: {
+        current: beginnerSummary,
+        action: beginnerAction,
+        coverage:
+          "Wallet behavior and buy/sell counts are sampled from recent on-chain activity and do not represent full lifetime wallet history."
+      }
     },
     miniChart,
     links: {

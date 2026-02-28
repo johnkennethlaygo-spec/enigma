@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FULSEN Enigma Start Here</title>
+    <title>KOBECOIN AI Guardian Start Here</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -17,9 +17,10 @@
         <a href="/manual.html">Manual</a>
         <a href="/presentation.html">Presentation</a>
         <a href="/developers.html">Developers</a>
+        <a href="/extension-preview.html">Extension Preview</a>
         <a href="/api-docs.html">API Explorer</a>
         <a href="/premium.html">Premium</a>
-        <a href="/admin.html">Admin Premium</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </header>
 
@@ -48,22 +49,24 @@
       </section>
 
       <section class="doc-card">
-        <h2>4) Safe First Run (Paper)</h2>
+        <h2>4) Trading Console: Manual Test First</h2>
         <ol>
-          <li>In <code>Paper Trade Test Lab</code>, enable paper mode.</li>
-          <li>Run <code>Run Paper Test Once</code>.</li>
-          <li>Review decisions, equity curve, and drawdown.</li>
+          <li>Open the <code>Trading Console (Manual + Agent)</code> section.</li>
+          <li>In <code>Manual Test Flow (Paper)</code>, set decision thresholds and risk size.</li>
+          <li>Run <code>Run One Manual Test</code> before enabling any loop.</li>
+          <li>Check decisions, expected equity curve, drawdown profile, and scanner <code>Market Regime</code> context.</li>
         </ol>
       </section>
 
       <section class="doc-card">
-        <h2>5) Live Execution (PRO)</h2>
+        <h2>5) Autopilot Engine (PRO for Live)</h2>
         <ol>
-          <li>Set your <code>Autopilot Execution Engine</code> risk values (size/TP/SL/trailing).</li>
-          <li>Use <code>Run Engine Tick Once</code> first.</li>
-          <li>If results are good, start <code>Start Engine Loop</code> for unattended mode.</li>
+          <li>Configure <code>Autopilot Execution Engine</code> (mode, size, TP/SL/trailing, hold time).</li>
+          <li>Apply an exit preset (<code>Scalp</code>, <code>Balanced</code>, <code>Swing</code>) if needed.</li>
+          <li>Run <code>Run One Engine Tick</code> first to confirm behavior.</li>
+          <li>Start <code>Start Engine Loop</code> only after stable paper outcomes.</li>
         </ol>
-        <p>Keep position sizing conservative while validating behavior.</p>
+        <p>Live mode requires PRO plan and backend live execution enabled.</p>
       </section>
 
       <section class="doc-card">

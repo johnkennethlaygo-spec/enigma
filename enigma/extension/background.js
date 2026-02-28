@@ -71,10 +71,10 @@ async function scanMintInternal(mint) {
   await appendScanHistory(scanEntry);
 
   if (status === "HIGH_RISK" && settings.alertHighRisk) {
-    notify("Enigma HIGH_RISK", `Token ${mint.slice(0, 6)}... is HIGH_RISK`);
+    notify("KOBECOIN HIGH_RISK", `Token ${mint.slice(0, 6)}... is HIGH_RISK`);
   }
   if (status === "CAUTION" && settings.alertCaution) {
-    notify("Enigma CAUTION", `Token ${mint.slice(0, 6)}... is CAUTION`);
+    notify("KOBECOIN CAUTION", `Token ${mint.slice(0, 6)}... is CAUTION`);
   }
 
   return payload;

@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FULSEN Enigma Manual</title>
+    <title>KOBECOIN AI Guardian Manual</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <header class="hero">
-      <h1>FULSEN Enigma User Manual</h1>
+      <h1>KOBECOIN AI Guardian User Manual</h1>
       <p>Clear operating guide for traders, teams, and client onboarding</p>
       <div class="nav">
         <a href="/">Dashboard</a>
@@ -17,16 +17,17 @@
         <a href="/manual.html">Manual</a>
         <a href="/presentation.html">Presentation</a>
         <a href="/developers.html">Developers</a>
+        <a href="/extension-preview.html">Extension Preview</a>
         <a href="/api-docs.html">API Explorer</a>
         <a href="/premium.html">Premium</a>
-        <a href="/admin.html">Admin Premium</a>
+        <a href="/admin.html">Admin</a>
       </div>
     </header>
 
     <main class="doc">
       <section class="doc-card">
-        <h2>1) What Enigma Does</h2>
-        <p>Enigma is a Solana behavioral risk scanner for trader decision support.</p>
+        <h2>1) What Kobecoin AI Guardian Does</h2>
+        <p>Kobecoin AI Guardian is a Solana behavioral risk scanner for trader decision support.</p>
         <ul>
           <li>Analyzes kill-switch risk and holder concentration before entry</li>
           <li>Tracks behavior changes during live monitoring</li>
@@ -35,7 +36,7 @@
       </section>
 
       <section class="doc-card">
-        <h2>2) What Enigma Does Not Do</h2>
+        <h2>2) What Kobecoin AI Guardian Does Not Do</h2>
         <ul>
           <li>Does not guarantee profits</li>
           <li>Does not replace your execution discipline and stop rules</li>
@@ -49,7 +50,7 @@
           <li>Connect wallet</li>
           <li>Build watchlist (up to 5 mints)</li>
           <li>Run dynamic scan with interval and duration</li>
-          <li>Review verdict and risk details before considering entry</li>
+          <li>Review verdict, Market Regime panel (Volatility Index + ADX), and risk details before considering entry</li>
           <li>Enable alerts to detect status flips while in position</li>
         </ol>
       </section>
@@ -94,7 +95,27 @@
       </section>
 
       <section class="doc-card">
-        <h2>8) Advanced Usage</h2>
+        <h2>8) Trading Console (Manual + Autopilot)</h2>
+        <ul>
+          <li>Run <code>Manual Test Flow (Paper)</code> first and review expected drawdown/equity before loops.</li>
+          <li>Use <code>Autopilot Execution Engine</code> only after paper results are stable for your watchlist.</li>
+          <li>Engine guardrails auto-adjust invalid combinations so <code>SL</code> and <code>Trailing Stop</code> stay below <code>TP</code>.</li>
+          <li>Live execution requires PRO plan and backend flag <code>ENIGMA_EXECUTION_ENABLED=1</code>.</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>9) Holder Behavior Coverage Limits</h2>
+        <p>The holder panel is intentionally transparent about analysis depth.</p>
+        <ul>
+          <li>Buy/sell counts sample recent token-account transactions, not full wallet lifetime history.</li>
+          <li>Cluster links use recent signature overlap on top holder accounts.</li>
+          <li>Use Solscan/Birdeye for deeper historical forensic checks before large entries.</li>
+        </ul>
+      </section>
+
+      <section class="doc-card">
+        <h2>10) Advanced Usage</h2>
         <p>If your organization needs automation, use the API and CLI guides in the developer page.</p>
         <p>For trading platform integrations (including Pump.fun workflows), follow <a href="/developers.html">Developer Docs</a>.</p>
       </section>

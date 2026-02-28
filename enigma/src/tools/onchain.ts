@@ -453,6 +453,15 @@ export function createOnchainTool(rpcUrl?: string) {
           newWalletHolderPct: Number(pct(freshRaw, totalSupply).toFixed(2)),
           connectedGroupCount: groups.length,
           connectedHolderPct: Number(pct(connectedRaw, totalSupply).toFixed(2)),
+          analysisCoverage: {
+            topAccountsAnalyzed: holderNodes.length,
+            buySellTxSamplePerAccount: 8,
+            accountsWithBuySellSampling: Math.min(holderNodes.length, 5),
+            signatureSamplePerAccount: 20,
+            walletAgeSignatureSamplePerOwner: 25,
+            fullHistory: false,
+            note: "Behavior metrics are based on recent on-chain samples, not full lifetime trade history."
+          },
           connectedGroups: groups.map((group, idx) => ({
             id: idx + 1,
             holderCount: group.length,
